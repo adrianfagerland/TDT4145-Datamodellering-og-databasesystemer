@@ -1,8 +1,3 @@
-INSERT OR IGNORE INTO VognType (VognTypenavn, Type)
-VALUES
-('SJ-sittevogn-1', 'Sitte'),
-('SJ-sovevogn-1', 'Sove');
-
 INSERT OR IGNORE INTO Togoppsett (Togoppsettnavn)
 VALUES
 ('ToSitte'),

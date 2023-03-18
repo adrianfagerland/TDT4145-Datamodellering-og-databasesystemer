@@ -27,7 +27,7 @@ def setup_database(conn):
     except sqlite3.Error as e:
         print("Error executing SQL script:", e)
     
-    # execute_sql_file(conn, "insert_nordlandsbanen.sql")
+    execute_sql_file(conn, "insert_nordlandsbanen.sql")
     execute_sql_file(conn, "insert_togruter.sql")
     # execute_sql_file(conn, "insert_billetter.sql")
     
