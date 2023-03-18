@@ -17,19 +17,19 @@ def input_station() -> str:
     return input("Stasjon: ")
 
 def input_ukedag() -> str:
-    input = input("Ukedag: ").lower()
-    if input not in ("mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"):
+    i = input("Ukedag: ").lower()
+    if i not in ("mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"):
         print("Ugyldig ukedag")
         return input_ukedag()
-    return input
+    return i
         
 def init(conn):
     while True:
         show_menu()
-        input = get_user_input()
-        if input == "0":
+        i = get_user_input()
+        if i == "0":
             break
-        if input < "0" or input > "5":
+        if i < "0" or i > "5":
             print("Ugyldig valg")
             continue
-        user_stories.handle(conn, input)
+        user_stories.handle(conn, i)
