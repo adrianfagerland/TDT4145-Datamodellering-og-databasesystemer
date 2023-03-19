@@ -16,14 +16,14 @@ def create_connection(db_file):
 
     return conn
 
-def execute_sql_file(conn, sql_file_path):
+def execute_sql_file(conn: sqlite3.Connection, sql_file_path):
     with open(sql_file_path, 'r') as file:
         sql_commands = file.read().split(';')
         for command in sql_commands:
             if command.strip():
                 conn.execute(command)
 
-def setup_database(conn):
+def setup_database(conn: sqlite3.Connection):
     with open("sql/lag_tabeller.sql", "r") as file:
         create_tables_script = file.read()
     try:

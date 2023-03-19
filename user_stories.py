@@ -34,18 +34,28 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
 
     # Skriv ut resultatene
     stdscr.clear()
-    result_header = f"Togruter som er innom stasjonen {stasjon} på {ukedag.capitalize()}:"
-    stdscr.addstr(0, 0, result_header, curses.color_pair(1) | curses.A_BOLD)
-    stdscr.refresh()
-
     rows = cursor.fetchall()
+    
+    togrute_id_width = max(len(row[0]) for row in rows) + 6
+    endestasjon_width = max(max(len(row[1]), len(stasjon)) for row in rows) + 6
+    avgang_ankomst_width = max(max(len(row[2]), len(row[3])) for row in rows) + 6
+
+    header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang/Ankomst':<{avgang_ankomst_width}}"
+    stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
+    stdscr.addstr(1, 0, "-" * (len(header)))
+
     for idx, row in enumerate(rows):
         if row[1] == stasjon:
-            result_row = f"TogruteID: {row[0]}. {stasjon} er endestasjon. Ankomst: {row[2]}."
+            result_row = f"{row[0]:<{togrute_id_width}}{stasjon:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"
         else:
-            result_row = f"TogruteID: {row[0]}. Endestasjon: {row[1]}. Avgang: {row[3]}"
-        stdscr.addstr(idx + 1, 0, result_row, curses.color_pair(3))
-        stdscr.refresh()
+            result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[3]:<{avgang_ankomst_width}}"
+        stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
+
+    stdscr.refresh()
+
+
+
+
 
     stdscr.getch()  # Wait for user to press a key before returning to the menu
 
