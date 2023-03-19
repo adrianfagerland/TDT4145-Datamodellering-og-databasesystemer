@@ -92,7 +92,7 @@ def input_stasjon(cursor, stdscr):
 
     stdscr.clear()
     curses.curs_set(2)
-    prompt="Velg stasjon: "
+    prompt="Skriv inn stasjon: "
     stations = get_stations(cursor)
 
     while True:
@@ -125,7 +125,7 @@ def input_ukedag(stdscr):
             else:
                 attr = curses.color_pair(3)
 
-            stdscr.addstr(idx + 4, 0, ukedag, attr)  # Changed from idx + 2 to idx + 1
+            stdscr.addstr(idx + 3, 0, ukedag, attr)  # Changed from idx + 2 to idx + 1
 
         key = stdscr.getch()
 
