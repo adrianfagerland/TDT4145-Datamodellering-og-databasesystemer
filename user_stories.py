@@ -40,8 +40,6 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
 
     rows = cursor.fetchall()
     for idx, row in enumerate(rows):
-        for col_idx, col in enumerate(row):
-            stdscr.addstr(idx + 1, col_idx * 20, str(col), curses.color_pair(3))
         if row[1] == stasjon:
             result_row = f"TogruteID: {row[0]}. {stasjon} er endestasjon. Ankomst: {row[2]}."
         else:
@@ -51,30 +49,26 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
 
     stdscr.getch()  # Wait for user to press a key before returning to the menu
 
+
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon
-
-
 def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
     pass
     # Implementer SQL-spørringen og returner resultatene
 
+
 # e) Registrer en ny kunde i kunderegisteret
-
-
 def register_kunde(conn, navn, epost, mobilnummer):
     pass
     # Implementer SQL-spørringen og returner resultatene
 
+
 # g) Finn ledige billetter for en oppgitt strekning på en ønsket togrute og kjøp billetter
-
-
 def find_and_buy_billetter(conn, kunde, togrute, reisedato, startstasjon, sluttstasjon, antall_billetter):
     pass
     # Implementer SQL-spørringen og returner resultatene
 
+
 # h) Finn all informasjon om kjøp for fremtidige reiser for en gitt kunde
-
-
 def get_kunde_reise_info(conn, kunde_id):
     pass
     # Implementer SQL-spørringen og returner resultatene
