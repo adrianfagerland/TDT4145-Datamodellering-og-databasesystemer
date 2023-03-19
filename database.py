@@ -1,10 +1,16 @@
 
 import sqlite3
 
+def init():
+    conn = create_connection("sql/togdb.sqlite")
+    setup_database(conn)
+    return conn.cursor()
+
 def create_connection(db_file):
     conn = None
     try:
-        conn = sqlite3.connect(db_file)
+        with sqlite3.connect(db_file) as conn:
+            return conn
     except sqlite3.Error as e:
         print(e)
 
@@ -18,7 +24,7 @@ def execute_sql_file(conn, sql_file_path):
                 conn.execute(command)
 
 def setup_database(conn):
-    with open("lag_tabeller.sql", "r") as file:
+    with open("sql/lag_tabeller.sql", "r") as file:
         create_tables_script = file.read()
     try:
         cursor = conn.cursor()
@@ -27,8 +33,9 @@ def setup_database(conn):
     except sqlite3.Error as e:
         print("Error executing SQL script:", e)
     
-    execute_sql_file(conn, "insert_nordlandsbanen.sql")
-    execute_sql_file(conn, "insert_togruter.sql")
-    # execute_sql_file(conn, "insert_billetter.sql")
+    execute_sql_file(conn, "sql/insert_vogntyper.sql")
+    execute_sql_file(conn, "sql/insert_nordlandsbanen.sql")
+    execute_sql_file(conn, "sql/insert_togruter.sql")
+    execute_sql_file(conn, "sql/insert_togruteforekomster.sql")
     
 

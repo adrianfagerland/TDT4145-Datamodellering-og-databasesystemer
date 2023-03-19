@@ -3,10 +3,8 @@ import database
 import interface
 
 def main():
-    conn = database.create_connection("togdb.sqlite")
-    database.setup_database(conn)
-
-    interface.init(conn)
+    cursor = database.init()
+    interface.init(cursor)
         
 
 if __name__ == "__main__":
