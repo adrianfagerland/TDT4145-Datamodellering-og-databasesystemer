@@ -71,8 +71,13 @@ def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
 
 # e) Registrer en ny kunde i kunderegisteret
 def register_kunde(conn, navn, epost, mobilnummer):
-    pass
-    # Implementer SQL-spørringen og returner resultatene
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO Kunde (Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?)", (navn, epost, mobilnummer))
+        conn.commit()
+        print("Kunden er nå registrert i databasen")
+    except sqlite3.IntegrityError as e:
+        print("Feil: ", e)
 
 
 # g) Finn ledige billetter for en oppgitt strekning på en ønsket togrute og kjøp billetter
