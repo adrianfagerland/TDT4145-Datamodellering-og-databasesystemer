@@ -23,7 +23,7 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
             FROM Togrutetabell
             WHERE TogruteID = t1.TogruteID
         )
-        AND t2.Stasjon = ?
+        AND LOWER(t2.Stasjon) = LOWER(?)
         AND EXISTS (
             SELECT 1
             FROM Togrute
@@ -36,14 +36,17 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
     stdscr.clear()
     rows = cursor.fetchall()
     
-    togrute_id_width = max(len(row[0]) for row in rows) + 6
-    endestasjon_width = max(max(len(row[1]), len(stasjon)) for row in rows) + 6
-    avgang_ankomst_width = max(max(len(row[2]), len(row[3])) for row in rows) + 6
+    if rows:
+        togrute_id_width = max(max(len(row[0]), len('TogruteID')) for row in rows) + 6
+        endestasjon_width = max(max(len(row[1]), len(stasjon), len('Endestasjon')) for row in rows) + 6
+        avgang_ankomst_width = max(max(len(row[2]), len(row[3]), len('Avgang/Ankomst')) for row in rows) + 6
 
-    header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang/Ankomst':<{avgang_ankomst_width}}"
-    stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
-    stdscr.addstr(1, 0, "-" * (len(header)))
+        header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang/Ankomst':<{avgang_ankomst_width}}"
+        stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
+        stdscr.addstr(1, 0, "-" * (len(header)))
 
+
+    # TODO fix avgang/ankomst
     for idx, row in enumerate(rows):
         if row[1] == stasjon:
             result_row = f"{row[0]:<{togrute_id_width}}{stasjon:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"

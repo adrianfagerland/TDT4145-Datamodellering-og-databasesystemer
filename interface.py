@@ -1,4 +1,4 @@
-import sys
+import sqlite3
 import curses
 import user_stories
 
@@ -84,35 +84,32 @@ def init(cursor):
     finally:
         end_screen(stdscr)
 
-def input_stasjon(cursor, stdscr):
-    def get_stations(cursor):
-        cursor.execute("SELECT Stasjonnavn FROM Stasjon;")
-        stations = [row[0] for row in cursor.fetchall()]
-        return stations
+def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
 
     stdscr.clear()
     curses.curs_set(2)
-    prompt="Skriv inn stasjon: "
-    stations = get_stations(cursor)
+    prompt = "Skriv inn stasjon: "
+    cursor.execute("SELECT LOWER(Stasjonnavn) FROM Stasjon;")
+    stations = [row[0] for row in cursor.fetchall()]
 
     while True:
         curses.echo()
         stdscr.addstr(0, 0, prompt)
         stdscr.refresh()
-        stasjon = stdscr.getstr().decode("utf-8")
+        stasjon = stdscr.getstr().decode('utf-8').lower()
         curses.noecho()
 
         if stasjon in stations:
             return stasjon
         else:
-            stdscr.addstr(len(prompt) + 1, 0, "Ugyldig stasjon. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
 
 
 def input_ukedag(stdscr):
-    prompt = "Velg Ukedag: "
+    prompt = "Velg ukedag: "
     curses.curs_set(0)
     ukedager = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
     stdscr.addstr(2, 0, prompt)  # Changed to row 0
