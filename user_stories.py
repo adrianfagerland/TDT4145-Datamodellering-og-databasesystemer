@@ -47,7 +47,6 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
         stdscr.addstr(1, 0, "-" * (len(header)))
 
 
-    # TODO fix avgang/ankomst
     for idx, row in enumerate(rows):
         if row[1].lower() == stasjon:
             result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"
