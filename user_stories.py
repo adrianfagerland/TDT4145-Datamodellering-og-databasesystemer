@@ -64,7 +64,10 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
 
 
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon
-def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
+
+#def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
+def search_togruter(cursor: sqlite3.Cursor, stdscr: curses.window):
+
     pass
     # Implementer SQL-spørringen og returner resultatene
 
@@ -88,5 +91,5 @@ def find_and_buy_billetter(conn, kunde, togrute, reisedato, startstasjon, slutts
 
 # h) Finn all informasjon om kjøp for fremtidige reiser for en gitt kunde
 def get_kunde_reise_info(conn, kunde_id):
+    
     pass
-    # Implementer SQL-spørringen og returner resultatene
