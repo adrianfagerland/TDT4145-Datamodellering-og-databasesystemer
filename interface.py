@@ -147,3 +147,64 @@ def input_ukedag(stdscr):
             return ukedager[selected]
 
         stdscr.refresh()
+
+def input_kundenavn(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn kundenavn: "
+    curses.echo()
+    stdscr.addstr(0, 0, prompt)
+    stdscr.refresh()
+    kundenavn = stdscr.getstr().decode('utf-8').lower()
+    curses.noecho()
+    return kundenavn
+
+def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn e-post: "
+    cursor.execute("SELECT LOWER(Epostadresse) FROM Kunde;")
+    epostadresser = [row[0] for row in cursor.fetchall()]
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        epostadresse = stdscr.getstr().decode('utf-8').lower()
+        curses.noecho()
+
+        if epostadresse not in epostadresser:
+            return epostadresse
+        else:
+            stdscr.addstr(1, 0, "Epostadressen er allerede i bruk. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn telefonnummer: "
+    cursor.execute("SELECT LOWER(Mobilnummer) FROM Kunde;")
+    telefonnummre = [row[0] for row in cursor.fetchall()]
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        telefonnummer = stdscr.getstr().decode('utf-8').lower()
+        curses.noecho()
+
+        if telefonnummer not in telefonnummre:
+            return telefonnummer
+        else:
+            stdscr.addstr(1, 0, "Telefonnummeret er allerede i bruk. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+def get_kundenummer(cursor, stdscr):
+    cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
+    result = cursor.fetchone()[0]
+    kundenummer = 1 if result is None else result + 1
+    return kundenummer

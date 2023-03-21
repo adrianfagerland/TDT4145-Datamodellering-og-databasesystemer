@@ -69,16 +69,28 @@ def search_togruter(cursor: sqlite3.Cursor, stdscr: curses.window):
 
 
 # e) Registrer en ny kunde i kunderegisteret
-#def register_kunde(conn, navn, epost, mobilnummer):
 def register_kunde(cursor: sqlite3.Cursor, stdscr: curses.window):
-    #cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO Kunde (Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?)", (navn, epost, mobilnummer))
-        conn.commit()
-        print("Kunden er nå registrert i databasen")
-    except sqlite3.IntegrityError as e:
-        print("Feil: ", e)
+    navn = interface.input_kundenavn(cursor, stdscr)
+    epost = interface.input_epost(cursor, stdscr)
+    mobilnummer = interface.input_mobilnummer(cursor, stdscr)
+    kundenummer = interface.get_kundenummer(cursor, stdscr)
+    stdscr.clear()
+    stdscr.addstr("Kunde ikke registrert enda!")
+    cursor.execute("INSERT INTO Kunde (Kundenummer, Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?, ?)", (kundenummer, navn, epost, mobilnummer))
 
+    # Skriv ut resultatene
+    stdscr.clear()
+    stdscr.addstr("Kunde registrert!")
+    #if cursor.rowcount == 1:
+    #    kundenummer = cursor.execute("SELECT (Kundenummer) FROM Kunde;")
+    #    stdscr.clear()
+    #    stdscr.addstr("Kunde registrert!")
+        
+    #else :
+    #    stdscr.clear()
+    #    stdscr.addstr("Noe gikk galt. Prøv igjen")
+
+    stdscr.getch()  # Wait for user to press a key before returning to the menu
 
 # g) Finn ledige billetter for en oppgitt strekning på en ønsket togrute og kjøp billetter
 def find_and_buy_billetter(conn, kunde, togrute, reisedato, startstasjon, sluttstasjon, antall_billetter):
