@@ -135,7 +135,7 @@ def input_ukedag(stdscr):
             else:
                 attr = curses.color_pair(3)
 
-            stdscr.addstr(idx + 1, 0, ukedag, attr)  # Changed from idx + 2 to idx + 1
+            stdscr.addstr(idx + 1, 0, ukedag, attr)
 
         key = stdscr.getch()
 

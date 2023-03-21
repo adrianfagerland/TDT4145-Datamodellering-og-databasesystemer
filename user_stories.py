@@ -56,10 +56,6 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
 
     stdscr.refresh()
 
-
-
-
-
     stdscr.getch()  # Wait for user to press a key before returning to the menu
 
 
