@@ -155,7 +155,7 @@ def input_kundenavn(cursor: sqlite3.Cursor, stdscr: curses.window):
     curses.echo()
     stdscr.addstr(0, 0, prompt)
     stdscr.refresh()
-    kundenavn = stdscr.getstr().decode('utf-8').lower()
+    kundenavn = stdscr.getstr().decode('utf-8')
     curses.noecho()
     return kundenavn
 
