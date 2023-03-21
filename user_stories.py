@@ -65,7 +65,47 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
 
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon
 def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
-    pass
+
+    #conn = sqlite3.connect(database_file)
+    cursor = conn.cursor()
+
+    # Utfør SQL-spørringen direkte (uten lagret prosedyre)
+    cursor.execute("""
+        SELECT
+            Togruteforekomst.Rute,
+            Togruteforekomst.Togruteforekomstdato,
+            MIN(Togrutetabell.Ankomst) AS Ankomst,
+            MAX(Togrutetabell.Avgang) AS Avgang
+        FROM
+            Togrutetabell
+            INNER JOIN Togruteforekomst ON Togrutetabell.TogruteID = Togruteforekomst.Rute
+        WHERE
+            Togrutetabell.Stasjon IN (?, ?) AND
+            (Togruteforekomst.Togruteforekomstdato = ? OR
+             Togruteforekomst.Togruteforekomstdato = date(?, '+1 day')) AND
+            Togrutetabell.Avgang >= ?
+        GROUP BY
+            Togruteforekomst.Rute, Togruteforekomst.Togruteforekomstdato
+        HAVING
+            COUNT(Togrutetabell.Stasjonnummer) = 2
+        ORDER BY
+            Togruteforekomst.Togruteforekomstdato,
+            MIN(Togrutetabell.Ankomst)
+    """, (startstasjon, sluttstasjon, dato, dato, klokkeslett))
+
+    # Hent resultatene
+    result = cursor.fetchall()
+
+    # Lukk markøren og tilkoblingen til databasen
+    cursor.close()
+    conn.close()
+
+    return result
+
+
+
+
+
     # Implementer SQL-spørringen og returner resultatene
 
 
@@ -88,5 +128,31 @@ def find_and_buy_billetter(conn, kunde, togrute, reisedato, startstasjon, slutts
 
 # h) Finn all informasjon om kjøp for fremtidige reiser for en gitt kunde
 def get_kunde_reise_info(conn, kunde_id):
-    pass
-    # Implementer SQL-spørringen og returner resultatene
+    
+    cursor = conn.cursor()
+    
+    query = """
+        SELECT
+            Kundeordre.Kundeordrenummer,
+            Kundeordre.Rute,
+            Kundeordre.Reisedato,
+            Kundeordre.Kjøpsdato,
+            Kundeordre.Kjøpstidspunkt,
+            Billett.BillettID,
+            Billett.Påstigning,
+            Billett.Avstigning,
+            Billett.Vogn
+        FROM
+            Kundeordre
+            INNER JOIN Billett ON Kundeordre.Kundeordrenummer = Billett.Ordrenummer
+        WHERE
+            Kundeordre.Kunde = ? AND
+            Kundeordre.Reisedato >= date('now')
+        ORDER BY
+            Kundeordre.Reisedato
+    """
+    cursor.execute(query, (kunde_id,))
+    results = cursor.fetchall()
+
+    cursor.close()
+    return results
