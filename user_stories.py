@@ -6,7 +6,6 @@ import curses
 def handle(conn: sqlite3.Connection, choice, stdscr):
     functions = {1: get_togruter_by_stasjon_and_day, 2: search_togruter,
                  3: register_kunde, 4: find_and_buy_billetter, 5: get_kunde_reise_info}
-
     functions[choice](conn, stdscr)
 
 # c) Hent togruter som er innom en gitt stasjon på en gitt ukedag
