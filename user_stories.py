@@ -73,8 +73,9 @@ def search_togruter(cursor: sqlite3.Cursor, stdscr: curses.window):
 
 
 # e) Registrer en ny kunde i kunderegisteret
-def register_kunde(conn, navn, epost, mobilnummer):
-    cursor = conn.cursor()
+#def register_kunde(conn, navn, epost, mobilnummer):
+def register_kunde(cursor: sqlite3.Cursor, stdscr: curses.window):
+    #cursor = conn.cursor()
     try:
         cursor.execute("INSERT INTO Kunde (Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?)", (navn, epost, mobilnummer))
         conn.commit()
