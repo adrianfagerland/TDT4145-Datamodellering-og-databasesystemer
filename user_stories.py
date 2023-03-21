@@ -75,20 +75,21 @@ def register_kunde(cursor: sqlite3.Cursor, stdscr: curses.window):
     mobilnummer = interface.input_mobilnummer(cursor, stdscr)
     kundenummer = interface.get_kundenummer(cursor, stdscr)
     stdscr.clear()
-    stdscr.addstr("Kunde ikke registrert enda!")
     cursor.execute("INSERT INTO Kunde (Kundenummer, Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?, ?)", (kundenummer, navn, epost, mobilnummer))
-
     # Skriv ut resultatene
-    stdscr.clear()
-    stdscr.addstr("Kunde registrert!")
-    #if cursor.rowcount == 1:
-    #    kundenummer = cursor.execute("SELECT (Kundenummer) FROM Kunde;")
-    #    stdscr.clear()
-    #    stdscr.addstr("Kunde registrert!")
-        
-    #else :
-    #    stdscr.clear()
-    #    stdscr.addstr("Noe gikk galt. Prøv igjen")
+
+    if cursor.rowcount == 1:
+        #kundenummer = cursor.execute("SELECT (Kundenummer) FROM Kunde;")
+        stdscr.clear()
+        stdscr.addstr(f"""Kunde registrert!
+        Kundenavn: {navn}
+        Epostadresse: {epost}
+        Mobilnummer: {mobilnummer}
+        Kundenummer: {kundenummer}
+        """)  
+    else :
+        stdscr.clear()
+        stdscr.addstr("Noe gikk galt. Prøv igjen")
 
     stdscr.getch()  # Wait for user to press a key before returning to the menu
 
