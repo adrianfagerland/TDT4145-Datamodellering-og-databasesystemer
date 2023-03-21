@@ -71,21 +71,33 @@ def get_menu_choice(stdscr):
 
 def init(cursor):
     stdscr = init_screen()
-
-    try:
-        while True:
-            choice = get_menu_choice(stdscr)
-            if choice == 6:
-                break
-            user_stories.handle(cursor, choice, stdscr)
-
-            # Clear the screen before showing the menu again
+    stdscr.clear()
+    min_lines = 10
+    prev_lines = 0
+    while True:
+        try:
+            current_lines, _ = stdscr.getmaxyx()
+            
+            if current_lines < min_lines and not (current_lines == prev_lines):
+                stdscr.clear()
+                stdscr.addstr(0, 0, "Please make the terminal window bigger.")
+                stdscr.getch()
+                stdscr.refresh()
+                prev_lines = current_lines
+            else:
+                choice = get_menu_choice(stdscr)
+                if choice == 6:
+                    break
+                user_stories.handle(cursor, choice, stdscr)
+                    
+                # Clear the screen before showing the menu again
+                stdscr.clear()
+                prev_lines = current_lines
+        except curses.error as e:
             stdscr.clear()
-    finally:
-        end_screen(stdscr)
+    end_screen(stdscr)
 
 def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
-
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn stasjon: "

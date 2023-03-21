@@ -1,3 +1,3 @@
 Kjør main.py for å kjøre programmet.
 
-For hver gang du får en feilmelding må du installere modulen med `pip`
+Kjør `python3 setup.py` før første gang
