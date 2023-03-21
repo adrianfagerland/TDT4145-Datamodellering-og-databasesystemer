@@ -2,22 +2,10 @@ import platform
 import subprocess
 
 if platform.system() == 'Windows':
-    try:
-        import windows_curses as curses
-    except ImportError:
-        subprocess.check_call(['pip', 'install', 'windows-curses'])
-        import windows_curses as curses
+    subprocess.check_call(['pip3', 'install', 'windows-curses'])
 else:
-    try:
-        import curses
-    except ImportError:
-        subprocess.check_call(['pip', 'install', 'curses'])
-        import curses
+    subprocess.check_call(['pip3', 'install', 'curses'])
 
-try:
-    import sqlite3
-except ImportError:
-    subprocess.check_call(['pip', 'install', 'pysqlite3'])
-    import sqlite3
+subprocess.check_call(['pip3', 'install', 'pysqlite3'])
 
 # Rest of your code using curses and sqlite3
