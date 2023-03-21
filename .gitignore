@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 .vscode/
 
-sql/togdb.sqlite-journal
+/sql/tog.db

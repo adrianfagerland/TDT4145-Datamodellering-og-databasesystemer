@@ -121,10 +121,11 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
 
 
 def input_ukedag(stdscr):
+    stdscr.clear()
     prompt = "Velg ukedag: "
     curses.curs_set(0)
     ukedager = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
-    stdscr.addstr(2, 0, prompt)  # Changed to row 0
+    stdscr.addstr(0, 0, prompt)  # Changed to row 0
     stdscr.refresh()
     selected = 0
     while True:
@@ -134,7 +135,7 @@ def input_ukedag(stdscr):
             else:
                 attr = curses.color_pair(3)
 
-            stdscr.addstr(idx + 3, 0, ukedag, attr)  # Changed from idx + 2 to idx + 1
+            stdscr.addstr(idx + 1, 0, ukedag, attr)
 
         key = stdscr.getch()
 
