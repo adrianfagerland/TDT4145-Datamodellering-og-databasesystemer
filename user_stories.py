@@ -3,14 +3,15 @@ import interface
 import curses
 
 
-def handle(cursor, choice, stdscr):
+def handle(conn: sqlite3.Connection, choice, stdscr):
     functions = {1: get_togruter_by_stasjon_and_day, 2: search_togruter,
                  3: register_kunde, 4: find_and_buy_billetter, 5: get_kunde_reise_info}
 
-    functions[choice](cursor, stdscr)
+    functions[choice](conn, stdscr)
 
 # c) Hent togruter som er innom en gitt stasjon på en gitt ukedag
-def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.window):
+def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.window):
+    cursor = conn.cursor()
     stasjon = interface.input_stasjon(cursor, stdscr)
     ukedag = interface.input_ukedag(stdscr)
 
@@ -69,13 +70,15 @@ def search_togruter(cursor: sqlite3.Cursor, stdscr: curses.window):
 
 
 # e) Registrer en ny kunde i kunderegisteret
-def register_kunde(cursor: sqlite3.Cursor, stdscr: curses.window):
-    navn = interface.input_kundenavn(cursor, stdscr)
+def register_kunde(conn: sqlite3.Connection, stdscr: curses.window):
+    cursor = conn.cursor()
+    navn = interface.input_kundenavn(stdscr)
     epost = interface.input_epost(cursor, stdscr)
     mobilnummer = interface.input_mobilnummer(cursor, stdscr)
-    kundenummer = interface.get_kundenummer(cursor, stdscr)
+    kundenummer = interface.get_kundenummer(cursor)
     stdscr.clear()
     cursor.execute("INSERT INTO Kunde (Kundenummer, Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?, ?)", (kundenummer, navn, epost, mobilnummer))
+    conn.commit()
     # Skriv ut resultatene
 
     if cursor.rowcount == 1:

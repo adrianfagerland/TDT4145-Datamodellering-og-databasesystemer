@@ -41,7 +41,7 @@ def print_menu(stdscr, selected, menu_items):
     stdscr.refresh()
 
 
-def get_menu_choice(stdscr):
+def get_menu_choice(stdscr: curses.window):
     menu_items = [
         "Hent togruter for en stasjon på en gitt ukedag",
         "Søk etter togruter mellom to stasjoner",
@@ -57,7 +57,9 @@ def get_menu_choice(stdscr):
     while True:
         key = stdscr.getch()
 
-        if key == curses.KEY_UP:
+        if key == 27 or key == ord("q"):
+            return 6
+        elif key == curses.KEY_UP:
             selected = (selected - 1) % len(menu_items)
         elif key == curses.KEY_DOWN:
             selected = (selected + 1) % len(menu_items)
@@ -69,7 +71,7 @@ def get_menu_choice(stdscr):
         print_menu(stdscr, selected, menu_items)
 
 
-def init(cursor):
+def init(conn):
     stdscr = init_screen()
     stdscr.clear()
     min_lines = 10
@@ -85,15 +87,17 @@ def init(cursor):
                 stdscr.refresh()
                 prev_lines = current_lines
             else:
+                stdscr.clear()
+                curses.curs_set(0)
                 choice = get_menu_choice(stdscr)
                 if choice == 6:
                     break
-                user_stories.handle(cursor, choice, stdscr)
+                user_stories.handle(conn, choice, stdscr)
                     
                 # Clear the screen before showing the menu again
                 stdscr.clear()
                 prev_lines = current_lines
-        except curses.error as e:
+        except curses.error:
             stdscr.clear()
     end_screen(stdscr)
 
@@ -148,14 +152,14 @@ def input_ukedag(stdscr):
 
         stdscr.refresh()
 
-def input_kundenavn(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_kundenavn(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn kundenavn: "
     curses.echo()
     stdscr.addstr(0, 0, prompt)
     stdscr.refresh()
-    kundenavn = stdscr.getstr().decode('utf-8').lower()
+    kundenavn = stdscr.getstr().decode('utf-8')
     curses.noecho()
     return kundenavn
 
@@ -203,7 +207,7 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.getch()
             stdscr.clear()
 
-def get_kundenummer(cursor, stdscr):
+def get_kundenummer(cursor):
     cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
     result = cursor.fetchone()[0]
     kundenummer = 1 if result is None else result + 1
