@@ -3,14 +3,15 @@ import interface
 import curses
 
 
-def handle(cursor, choice, stdscr):
+def handle(conn: sqlite3.Connection, choice, stdscr):
     functions = {1: get_togruter_by_stasjon_and_day, 2: search_togruter,
                  3: register_kunde, 4: find_and_buy_billetter, 5: get_kunde_reise_info}
 
-    functions[choice](cursor, stdscr)
+    functions[choice](conn, stdscr)
 
 # c) Hent togruter som er innom en gitt stasjon på en gitt ukedag
-def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.window):
+def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.window):
+    cursor = conn.cursor()
     stasjon = interface.input_stasjon(cursor, stdscr)
     ukedag = interface.input_ukedag(stdscr)
 
@@ -46,7 +47,6 @@ def get_togruter_by_stasjon_and_day(cursor: sqlite3.Cursor, stdscr: curses.windo
         stdscr.addstr(1, 0, "-" * (len(header)))
 
 
-    # TODO fix avgang/ankomst
     for idx, row in enumerate(rows):
         if row[1].lower() == stasjon:
             result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"
@@ -69,15 +69,31 @@ def search_togruter(cursor: sqlite3.Cursor, stdscr: curses.window):
 
 
 # e) Registrer en ny kunde i kunderegisteret
-def register_kunde(conn, navn, epost, mobilnummer):
+def register_kunde(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO Kunde (Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?)", (navn, epost, mobilnummer))
-        conn.commit()
-        print("Kunden er nå registrert i databasen")
-    except sqlite3.IntegrityError as e:
-        print("Feil: ", e)
+    navn = interface.input_kundenavn(stdscr)
+    epost = interface.input_epost(cursor, stdscr)
+    mobilnummer = interface.input_mobilnummer(cursor, stdscr)
+    kundenummer = interface.get_kundenummer(cursor)
+    stdscr.clear()
+    cursor.execute("INSERT INTO Kunde (Kundenummer, Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?, ?)", (kundenummer, navn, epost, mobilnummer))
+    conn.commit()
+    # Skriv ut resultatene
 
+    if cursor.rowcount == 1:
+        #kundenummer = cursor.execute("SELECT (Kundenummer) FROM Kunde;")
+        stdscr.clear()
+        stdscr.addstr(f"""Kunde registrert!
+        Kundenavn: {navn}
+        Epostadresse: {epost}
+        Mobilnummer: {mobilnummer}
+        Kundenummer: {kundenummer}
+        """)  
+    else :
+        stdscr.clear()
+        stdscr.addstr("Noe gikk galt. Prøv igjen")
+
+    stdscr.getch()  # Wait for user to press a key before returning to the menu
 
 # g) Finn ledige billetter for en oppgitt strekning på en ønsket togrute og kjøp billetter
 def find_and_buy_billetter(conn, kunde, togrute, reisedato, startstasjon, sluttstasjon, antall_billetter):

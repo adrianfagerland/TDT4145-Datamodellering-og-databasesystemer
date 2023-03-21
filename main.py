@@ -3,8 +3,9 @@ import database
 import interface
 
 def main():
-    cursor = database.init()
-    interface.init(cursor)
+    conn = database.init()
+    interface.init(conn)
+    conn.close()
         
 
 if __name__ == "__main__":
