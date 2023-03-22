@@ -1,6 +1,8 @@
 import sqlite3
 import curses
 import user_stories
+import re
+
 
 
 def init_screen():
@@ -19,11 +21,13 @@ def init_screen():
     return stdscr
 
 
+
 def end_screen(stdscr):
     stdscr.keypad(False)
     curses.echo()
     curses.nocbreak()
     curses.endwin()
+
 
 
 def print_menu(stdscr, selected, menu_items):
@@ -39,6 +43,7 @@ def print_menu(stdscr, selected, menu_items):
         stdscr.addstr(index + 2, 0, f"{index + 1}: {item}", attr)
 
     stdscr.refresh()
+
 
 
 def get_menu_choice(stdscr: curses.window):
@@ -71,6 +76,7 @@ def get_menu_choice(stdscr: curses.window):
         print_menu(stdscr, selected, menu_items)
 
 
+
 def init(conn):
     stdscr = init_screen()
     stdscr.clear()
@@ -101,6 +107,8 @@ def init(conn):
             stdscr.clear()
     end_screen(stdscr)
 
+
+
 def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -122,6 +130,7 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
+
 
 
 def input_ukedag(stdscr):
@@ -152,6 +161,8 @@ def input_ukedag(stdscr):
 
         stdscr.refresh()
 
+
+
 def input_kundenavn(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -162,6 +173,8 @@ def input_kundenavn(stdscr: curses.window):
     kundenavn = stdscr.getstr().decode('utf-8')
     curses.noecho()
     return kundenavn
+
+
 
 def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
@@ -185,6 +198,8 @@ def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.getch()
             stdscr.clear()
 
+
+
 def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -207,8 +222,55 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.getch()
             stdscr.clear()
 
+
+
 def get_kundenummer(cursor):
     cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
     result = cursor.fetchone()[0]
     kundenummer = 1 if result is None else result + 1
     return kundenummer
+
+
+
+# input-funkskjon for datoer på formatet yyyy-mm-dd
+def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn dato (yyyy-mm-dd): "
+    datoformat = re.compile("/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/")
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        dato = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+        if re.fullmatch(datoformat, dato): # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
+            return dato
+        else:
+            stdscr.addstr(1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+    
+
+
+def input_tid(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn tid (hh:mm): "
+    tidformat = re.compile("/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/")
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        tid = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+        if re.fullmatch(tidformat, tid): # Sjekker om tid er på riktig format.
+            return tid
+        else:
+            stdscr.addstr(1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
