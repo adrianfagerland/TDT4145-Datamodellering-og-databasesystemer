@@ -114,8 +114,12 @@ def get_menu_choice(stdscr: curses.window):
         elif key == curses.KEY_DOWN:
             selected = (selected + 1) % len(menu_items)
         elif key in (curses.KEY_ENTER, ord("\n"), ord("\r")):
+            stop_event.set()
+            train_thread.join()
             return selected + 1
         elif key in range(ord("1"), ord("6") + 1):
+            stop_event.set()
+            train_thread.join()
             return key - ord("0")
 
         with screen_lock:
