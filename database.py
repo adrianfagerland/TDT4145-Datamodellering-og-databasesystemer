@@ -3,7 +3,7 @@ import sqlite3
 
 
 def init():
-    conn = create_connection("sql/tog.db")
+    conn = create_connection("tog.db")
     setup_database(conn)
     return conn
 
