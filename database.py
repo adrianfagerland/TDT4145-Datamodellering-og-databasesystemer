@@ -39,6 +39,6 @@ def setup_database(conn: sqlite3.Connection):
         print("Error executing SQL script:", e)
 
     execute_sql_file(conn, "sql/insert_vogntyper.sql")
-    execute_sql_file(conn, "sql/insert_nordlandsbanen.sql")
-    execute_sql_file(conn, "sql/insert_togruter.sql")
-    execute_sql_file(conn, "sql/insert_togruteforekomster.sql")
+    execute_sql_file(conn, "brukerhistorier/a.sql")
+    execute_sql_file(conn, "brukerhistorier/b.sql")
+    execute_sql_file(conn, "brukerhistorier/f.sql")
