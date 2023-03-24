@@ -59,6 +59,43 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
     stdscr.getch()  # Wait for user to press a key before returning to the menu
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon
 
 #def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
@@ -69,13 +106,54 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     print("\nAngi en sluttstasjon: \n")
     sluttstasjon = interface.input_stasjon(cursor, stdscr)
     print("\nAngi en dato: \n")
-    dato = interface.input_date()
-    print("\Angi et klokkeslett: \n")
-    klokkeslett = interface.input_time(conn, stdscr)
+    dato = interface.input_dato(cursor, stdscr)
+    print("\nAngi et klokkeslett: \n")
+    klokkeslett = interface.input_klokkeslett(cursor, stdscr)
 
-    query = f"""
-        SELECT t1.TogruteID, t1.Stasjon AS EndStasjon, t2.Ankomst AS CurrentStasjonAnkomst, t2.Avgang AS CurrentStasjonAvgang
-        """
+##    query = f"""
+##           SELECT DISTINCT Togrute.Togavgangstid, Togrute.Togankomsttid, Togrute.TogruteID
+##           FROM Togrute
+##           JOIN Delstrekning AS Start ON Start.DelstrekningID = Togrute.Startdelstrekning
+##           JOIN Delstrekning AS Slutt ON Slutt.DelstrekningID = Togrute.Sluttdelstrekning
+##           WHERE Start.Startstasjon = ? AND Slutt.Sluttstasjon = ?
+##           AND Togrute.Dato IN (?, date(?, '+1 day'))
+##           AND Togrute.Togavgangstid >= ?
+##           ORDER BY Togrute.Togavgangstid ASC;
+##        
+##           """
+
+    query = """
+            SELECT *
+            FROM Delstrekning
+            WHERE Startstasjon = ?
+              AND Sluttstasjon = ?
+              AND strftime('%Y-%m-%d %H:%M', Tidspunkt) >= ?
+              AND strftime('%Y-%m-%d', Tidspunkt) <= date(?, '+1 day')
+            ORDER BY Tidspunkt ASC;
+            """
+    
+    params = ((dato, klokkeslett, startstasjon, sluttstasjon,))
+    cursor.execute(query, params)
+
+    ### Skriver resultattabellen i terminalen ###
+    stdscr.clear()
+    rows = cursor.fetchall()
+
+    if rows:
+        togrute_id_width = max(max(len(row[0]), len('TogruteID')) for row in rows) + 6
+        endestasjon_width = max(max(len(row[1]), len(stasjon), len('Endestasjon')) for row in rows) + 6
+        avgang_ankomst_width = max(max(len(row[2]), len(row[3]), len('Avgang/Ankomst')) for row in rows) + 6
+
+        header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang/Ankomst':<{avgang_ankomst_width}}"
+        stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
+        stdscr.addstr(1, 0, "-" * (len(header)))
+
+    for idx, row in enumerate(rows):
+        result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"
+        stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
+
+    stdscr.refresh()
+    stdscr.getch()
 
 
 
@@ -83,7 +161,36 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
 
 
 
-9
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

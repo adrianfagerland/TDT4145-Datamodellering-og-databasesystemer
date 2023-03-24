@@ -237,7 +237,8 @@ def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn dato (yyyy-mm-dd): "
-    datoformat = re.compile("/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/")
+    datoformat = re.compile("\d{4}-\d{2}-\d{2}")
+                            # /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/
 
     while True:
         curses.echo()
@@ -255,11 +256,12 @@ def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
     
 
 # input-funksjon for tider på formatet hh:mm
-def input_tid(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_klokkeslett(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn tid (hh:mm): "
-    tidformat = re.compile("/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/")
+    tidformat = re.compile("^([0-1][0-9]|2[0-3]):([0-5][0-9])$")
+                          # /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/
 
     while True:
         curses.echo()
