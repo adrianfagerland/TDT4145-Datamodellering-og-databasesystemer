@@ -62,10 +62,29 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon
 
 #def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
-def search_togruter(cursor: sqlite3.Cursor, stdscr: curses.window):
+def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
+    cursor = conn.cursor()
+    print("Angi en startstasjon: \n")
+    startstasjon = interface.input_stasjon(cursor, stdscr)
+    print("\nAngi en sluttstasjon: \n")
+    sluttstasjon = interface.input_stasjon(cursor, stdscr)
+    print("\nAngi en dato: \n")
+    dato = interface.input_date()
+    print("\Angi et klokkeslett: \n")
+    klokkeslett = interface.input_time(conn, stdscr)
 
-    pass
-    # Implementer SQL-spørringen og returner resultatene
+    query = f"""
+        SELECT t1.TogruteID, t1.Stasjon AS EndStasjon, t2.Ankomst AS CurrentStasjonAnkomst, t2.Avgang AS CurrentStasjonAvgang
+        """
+
+
+
+
+
+
+
+9
+
 
 
 # e) Registrer en ny kunde i kunderegisteret
