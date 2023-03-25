@@ -244,7 +244,7 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
 def get_kundenummer(cursor):
     cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
     result = cursor.fetchone()[0]
-    kundenummer = 1 if result is None else result + 1
+    kundenummer = 1 if result is None else int(result) + 1
     return kundenummer
 
 
@@ -369,14 +369,14 @@ def input_reisedato(cursor: sqlite3.Cursor, stdscr: curses.window):
 def make_billettID(cursor: sqlite3.Cursor):
     cursor.execute("SELECT MAX(BillettID) FROM Billett;")
     result = cursor.fetchone()[0]
-    billettID = 1 if result is None else result + 1
+    billettID = 1 if result is None else int(result) + 1
     return billettID
 
 
 def make_kundeordrenummer(cursor: sqlite3.Cursor):
     cursor.execute("SELECT MAX(Kundeordrenummer) FROM Kundeordre;")
     result = cursor.fetchone()[0]
-    kundeordrenummer = 1 if result is None else result + 1
+    kundeordrenummer = 1 if result is None else int(result) + 1
     return kundeordrenummer
 
 

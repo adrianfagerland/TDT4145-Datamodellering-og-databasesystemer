@@ -19,7 +19,6 @@ def register_kunde(conn: sqlite3.Connection, stdscr: curses.window):
     # Skriv ut resultatene
 
     if cursor.rowcount == 1:
-        #kundenummer = cursor.execute("SELECT (Kundenummer) FROM Kunde;")
         stdscr.clear()
         stdscr.addstr(f"""Kunde registrert!
         Kundenavn: {navn}
