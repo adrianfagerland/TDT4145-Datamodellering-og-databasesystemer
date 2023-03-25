@@ -8,6 +8,7 @@ import user_stories
 import train
 
 
+
 def init(conn):
     stdscr = init_screen()
     stdscr.clear()
@@ -44,6 +45,7 @@ def init(conn):
         end_screen(stdscr)
 
 
+
 def init_screen():
     stdscr = curses.initscr()
     curses.start_color()
@@ -66,6 +68,7 @@ def end_screen(stdscr):
     curses.echo()
     curses.nocbreak()
     curses.endwin()
+
 
 
 def print_menu(stdscr: curses.window, selected, menu_items):
@@ -129,6 +132,7 @@ def get_menu_choice(stdscr: curses.window):
             print_menu(stdscr, selected, menu_items)
 
 
+
 def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -151,6 +155,7 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
+
 
 
 def input_ukedag(stdscr: curses.window):
@@ -183,6 +188,7 @@ def input_ukedag(stdscr: curses.window):
         stdscr.refresh()
 
 
+
 def input_kundenavn(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -193,6 +199,7 @@ def input_kundenavn(stdscr: curses.window):
     kundenavn = stdscr.getstr().decode('utf-8')
     curses.noecho()
     return kundenavn
+
 
 
 def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
@@ -219,6 +226,7 @@ def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.clear()
 
 
+
 def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -243,6 +251,7 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.clear()
 
 
+
 def get_kundenummer(cursor):
     cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
     result = cursor.fetchone()[0]
@@ -250,12 +259,11 @@ def get_kundenummer(cursor):
     return kundenummer
 
 
-def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
+
+def input_dato(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn dato (yyyy-mm-dd): "
-#   datoformat = re.compile("\d{4}-\d{2}-\d{2}")
-
     while True:
             curses.echo()
             stdscr.addstr(0, 0, prompt)
@@ -271,24 +279,10 @@ def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
                 stdscr.getch()
                 stdscr.clear()
 
-### Om man skal sjekke format med regex:
-#    while True:
-#        curses.echo()
-#        stdscr.addstr(0, 0, prompt)
-#        stdscr.refresh()
-#        dato = stdscr.getstr().decode('utf-8')
-#        curses.noecho()
-#        if re.fullmatch(datoformat, dato): # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
-#            return dato
-#        else:
-#            stdscr.addstr(1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
-#            stdscr.refresh()
-#            stdscr.getch()
-#            stdscr.clear()
-    
+
 
 # input-funksjon for tider på formatet hh:mm
-def input_klokkeslett(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_klokkeslett( stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn tid (hh:mm): "
