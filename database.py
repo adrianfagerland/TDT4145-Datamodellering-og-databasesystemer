@@ -3,7 +3,7 @@ import sqlite3
 
 
 def init():
-    conn = create_connection("sql/tog.db")
+    conn = create_connection("tog.db")
     setup_database(conn)
     return conn
 
@@ -29,7 +29,7 @@ def execute_sql_file(conn: sqlite3.Connection, sql_file_path):
 
 
 def setup_database(conn: sqlite3.Connection):
-    with open("sql/lag_tabeller.sql", "r") as file:
+    with open("lag_tabeller.sql", "r") as file:
         create_tables_script = file.read()
     try:
         cursor = conn.cursor()
@@ -38,7 +38,6 @@ def setup_database(conn: sqlite3.Connection):
     except sqlite3.Error as e:
         print("Error executing SQL script:", e)
 
-    execute_sql_file(conn, "sql/insert_vogntyper.sql")
-    execute_sql_file(conn, "sql/insert_nordlandsbanen.sql")
-    execute_sql_file(conn, "sql/insert_togruter.sql")
-    execute_sql_file(conn, "sql/insert_togruteforekomster.sql")
+    execute_sql_file(conn, "brukerhistorier/a.sql")
+    execute_sql_file(conn, "brukerhistorier/b.sql")
+    execute_sql_file(conn, "brukerhistorier/f.sql")
