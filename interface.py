@@ -552,3 +552,63 @@ def velg_billettype(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
+
+def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, type):
+    stdscr.clear()
+    curses.curs_set(2)
+    if type == "sete": 
+        cursor.execute("""
+        SELECT V.Vognnummer, V.AvType
+        FROM Vogn AS V
+        JOIN Vogntype AS VT ON V.AvType = VT.Vogntypenavn
+        WHERE V.Togoppsett = (
+            SELECT Togoppsett
+            FROM Togrute
+            WHERE TogruteID = ?
+        ) AND VT.Type = 'Sitte'
+        ORDER BY V.Vognnummer;
+        """,
+        (togrute,))
+    if type == "seng": 
+        cursor.execute("""
+        SELECT V.Vognnummer, V.AvType
+        FROM Vogn AS V
+        JOIN Vogntype AS VT ON V.AvType = VT.Vogntypenavn
+        WHERE V.Togoppsett = (
+            SELECT Togoppsett
+            FROM Togrute
+            WHERE TogruteID = ?
+        ) AND VT.Type = 'Sove'
+        ORDER BY V.Vognnummer;
+        """,
+        (togrute,))
+
+    vogner = cursor.fetchall()
+    prompt = "Tilgjengelige vogner er følgende:"
+
+    for vogn in vogner:
+        prompt += (f"Vognnummer: {vogn[0]}, Vogntype: {vogn[1]}")
+    prompt += "\nSkriv hvilket vognnummer du vil reise med: "
+
+    while True:
+        try:
+            curses.echo()
+            stdscr.addstr(0, 0, prompt)
+            stdscr.refresh()
+            vognnummer = stdscr.getstr().decode('utf-8').lower()
+            curses.noecho()
+
+            if int(vognnummer) in vogner[0]:
+                return vognnummer
+            else:
+                stdscr.addstr(1, 0, "Ugyldig vognnummer. Prøv igjen.",
+                curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
+        except Exception as e:
+            stdscr.addstr(1, 0, f"En feil oppstod: {e}",
+            curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
