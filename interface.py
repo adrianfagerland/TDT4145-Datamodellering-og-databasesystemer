@@ -45,7 +45,6 @@ def init(conn):
         end_screen(stdscr)
 
 
-
 def init_screen():
     stdscr = curses.initscr()
     curses.start_color()
@@ -68,7 +67,6 @@ def end_screen(stdscr):
     curses.echo()
     curses.nocbreak()
     curses.endwin()
-
 
 
 def print_menu(stdscr: curses.window, selected, menu_items):
@@ -132,7 +130,6 @@ def get_menu_choice(stdscr: curses.window):
             print_menu(stdscr, selected, menu_items)
 
 
-
 def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -155,7 +152,6 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-
 
 
 def input_ukedag(stdscr: curses.window):
@@ -188,7 +184,6 @@ def input_ukedag(stdscr: curses.window):
         stdscr.refresh()
 
 
-
 def input_kundenavn(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -199,7 +194,6 @@ def input_kundenavn(stdscr: curses.window):
     kundenavn = stdscr.getstr().decode('utf-8')
     curses.noecho()
     return kundenavn
-
 
 
 def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
@@ -226,7 +220,6 @@ def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.clear()
 
 
-
 def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -249,7 +242,6 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-
 
 
 def get_kundenummer(cursor):
@@ -298,6 +290,266 @@ def input_klokkeslett( stdscr: curses.window):
             return tid
         else:
             stdscr.addstr(1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def find_kundenummer(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn telefonnummeret du er registrert med: "
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        mobilnummerInput = stdscr.getstr().decode('utf-8').lower()
+        query = f"""
+        SELECT Kundenummer FROM Kunde 
+        WHERE LOWER(Mobilnummer) = ?
+        """
+        cursor.execute(query, (mobilnummerInput,))
+
+        # Skriv ut resultatene
+        stdscr.clear()
+        result = cursor.fetchone()
+        curses.noecho()
+
+        if result:
+            kundenummer = result[0]
+            return kundenummer
+        else:
+            stdscr.addstr(
+                1, 0, "Finner ingen kunde for dette telefonnummeret. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def input_reisedato(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn ønsket avreisedato (yyyy-mm-dd): "
+    datoformat = re.compile("\d{4}-\d{2}-\d{2}")
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        dato = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+        # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
+        if re.fullmatch(datoformat, dato):
+            try:
+                # Funker dette?
+                input_dato = datetime.datetime.strptime(
+                    dato, "%Y-%m-%d").date()
+                if input_dato >= datetime.date.today():
+                    return dato
+                else:
+                    stdscr.addstr(
+                        1, 0, "Datoen kan ikke være i fortid. Prøv igjen.", curses.color_pair(4))
+                    stdscr.refresh()
+                    stdscr.getch()
+                    stdscr.clear()
+            except ValueError:
+                stdscr.addstr(1, 0, "Ugyldig dato. Prøv igjen.",
+                              curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
+        else:
+            stdscr.addstr(
+                1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def make_billettID(cursor: sqlite3.Cursor):
+    cursor.execute("SELECT MAX(BillettID) FROM Billett;")
+    result = cursor.fetchone()[0]
+    billettID = 1 if result is None else result + 1
+    return billettID
+
+
+def make_kundeordrenummer(cursor: sqlite3.Cursor):
+    cursor.execute("SELECT MAX(Kundeordrenummer) FROM Kundeordre;")
+    result = cursor.fetchone()[0]
+    kundeordrenummer = 1 if result is None else result + 1
+    return kundeordrenummer
+
+
+def get_kjopsdato():
+    now = datetime.datetime.now()  # Få dagens dato
+    kjopsdato = now.strftime("%Y-%m-%d")  # Konverter datoen til ønsket format
+
+    return kjopsdato  # Returner datoen
+
+
+def get_kjopstidspunkt():
+    now = datetime.datetime.now()  # Få dagens dato og tid
+    # Konverter tidspunktet til ønsket format
+    kjopstidspunkt = now.strftime("%H:%M")
+
+    return kjopstidspunkt
+
+
+def input_startstasjon(cursor: sqlite3.Cursor, stdscr: curses.window, togrute):
+    stdscr.clear()
+    curses.curs_set(2)
+    #cursor.execute("SELECT LOWER(Stasjonnavn) FROM Stasjon;")
+    cursor.execute("""
+        SELECT (Stasjonnavn)
+        FROM Stasjon
+        WHERE Stasjonnavn IN (
+            SELECT Stasjon FROM Togrutetabell WHERE TogruteID = ?);""",
+                   (togrute,)
+                   )
+    # togrutetabell
+    # Stasjonnummer INT NOT NULL,
+    # Stasjon VARCHAR(50) NOT NULL,
+    stations = [row[0] for row in cursor.fetchall()]
+    prompt = "Mulige avreisestasjoner: "
+    for station in stations:
+        prompt += station + ', '
+    prompt += "\nSkriv hvilken stasjon du vil reise fra: "
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        stasjon = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+
+        if stasjon in stations:
+            return stasjon
+        else:
+            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.",
+                          curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def input_sluttstasjon(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, startstasjon):
+    stdscr.clear()
+    curses.curs_set(2)
+    #cursor.execute("SELECT LOWER(Stasjonnavn) FROM Stasjon;")
+    cursor.execute("""
+        SELECT (Stasjonnavn)
+        FROM Stasjon
+        WHERE Stasjonnavn IN (
+            SELECT Stasjon
+            FROM Togrutetabell
+            WHERE TogruteID = ? AND Stasjonnummer > (
+                SELECT Stasjonnummer
+                FROM Togrutetabell
+                WHERE TogruteID = ? AND Stasjon = ?)
+        );""",
+                   (togrute, togrute, startstasjon)
+                   )
+    # togrutetabell
+    # Stasjonnummer INT NOT NULL,
+    # Stasjon VARCHAR(50) NOT NULL,
+    stations = [row[0] for row in cursor.fetchall()]
+    prompt = "Valgt startstasjon: " + startstasjon
+    prompt += "\nMulige sluttstasjoner: "
+    for station in stations:
+        prompt += station + ', '
+    prompt += "\nSkriv hvilken stasjon du vil reise til: "
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        stasjon = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+
+        if stasjon in stations:
+            return stasjon
+        else:
+            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.",
+                          curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Skriv inn antall billetter du vil kjøpe: "
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        antall_str = stdscr.getstr().decode('utf-8').lower().strip()
+        curses.noecho()
+
+        try:
+            antall = int(antall_str)
+            if antall > 0:
+                return antall
+            else:
+                stdscr.addstr(
+                    1, 0, "Du må kjøpe et positivt antall billetter. Prøv igjen.", curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
+        except ValueError:
+            stdscr.addstr(
+                1, 0, "Du må skrive inn et gyldig antall. Prøv igjen.", curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def input_togrute(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    cursor.execute("SELECT (TogruteID) FROM Togrute;")
+    ruter = [row[0] for row in cursor.fetchall()]
+    prompt = "Potensielle togruter: "
+    for rute in ruter:
+        prompt += rute + ", "
+    prompt += "\nVelg togrute: "
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        valgtRute = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+
+        if valgtRute in ruter:
+            return valgtRute
+        else:
+            stdscr.addstr(1, 0, "Ugyldig rute. Prøv igjen.",
+                          curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+
+def velg_billettype(cursor: sqlite3.Cursor, stdscr: curses.window):
+    stdscr.clear()
+    curses.curs_set(2)
+    prompt = "Velg billettype med å skrive 'sete' eller 'seng': "
+
+    while True:
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        billetttype = stdscr.getstr().decode('utf-8').lower()
+        curses.noecho()
+
+        if billetttype == "seng" or billetttype == "sete":
+            return billetttype
+        else:
+            stdscr.addstr(1, 0, "Ugyldig bilettype. Prøv igjen.",
+                          curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
