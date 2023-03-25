@@ -36,7 +36,6 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
                 AND (start.stasjonnummer < slutt.stasjonnummer)
             ORDER BY AvreiseDato, AvreiseTid ASC;
             """
-# Brukte denne DATEADD(day, 1, ?) etter And i nest siste linje.
 
     params = (AvreiseStasjon, AnkomstStasjon, Dato,
               DatoPlusEnDag, DatoMinusEnDag, Tid, DatoPlusEnDag)
