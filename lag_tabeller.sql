@@ -89,6 +89,8 @@ CREATE TABLE IF NOT EXISTS Togrute (
 );
 CREATE TABLE IF NOT EXISTS Togrutetabell (
     TogruteID VARCHAR(50) NOT NULL,
+    Stasjonnummer INT NOT NULL,
+    Stasjon VARCHAR(50) NOT NULL,
     Ankomst VARCHAR(50) NOT NULL,
     Avgang VARCHAR(50) NOT NULL,
     PRIMARY KEY (TogruteID, Stasjonnummer),
