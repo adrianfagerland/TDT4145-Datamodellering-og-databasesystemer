@@ -8,6 +8,8 @@ import interface
 #    Resultatet skal inkludere reiser samme dag (fra og med tidspunktet) og reiser neste dag.
 #    Resultatet skal være sortert etter avgangstidspunkt.
 
+# Vi har antatt ingen togreise vil gå over 3 dager, da norges lengste teoretiske togreise vil vare i rundt 18 timer
+
 
 def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
@@ -17,6 +19,8 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     Tid = interface.input_klokkeslett(stdscr)
     DatoPlusEnDag = (datetime.datetime.strptime(
         Dato, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    DatoMinusEnDag = (datetime.datetime.strptime(
+        Dato, '%Y-%m-%d') - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
     query = f"""
             SELECT tr.TogruteID, start.Stasjon AS AvreiseStasjon, 
@@ -27,13 +31,14 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
             JOIN Togrutetabell slutt ON tr.TogruteID = slutt.TogruteID 
             JOIN Togruteforekomst tgf ON tr.TogruteID = tgf.Rute 
             WHERE LOWER(start.Stasjon) = LOWER(?) AND LOWER(slutt.Stasjon) = LOWER(?) 
-                AND (tgf.Togruteforekomstdato = ? OR tgf.Togruteforekomstdato = ?)
+                AND (tgf.Togruteforekomstdato = ? OR tgf.Togruteforekomstdato = ? OR (tgf.Togruteforekomstdato = ? AND SUBSTR(start.avgang, -2) == "+1"))
                 AND (start.avgang >= ? OR tgf.Togruteforekomstdato = ?)
+                AND (start.stasjonnummer < slutt.stasjonnummer)
             ORDER BY AvreiseDato, AvreiseTid ASC;
             """
 
     params = (AvreiseStasjon, AnkomstStasjon, Dato,
-              DatoPlusEnDag, Tid, DatoPlusEnDag,)
+              DatoPlusEnDag, DatoMinusEnDag, Tid, DatoPlusEnDag)
     cursor.execute(query, params)
 
     ### Skriver resultattabellen i terminalen ###
@@ -61,7 +66,9 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
         for idx, row in enumerate(rows):
             AnkomstDato = (datetime.datetime.strptime(
                 row[2], '%Y-%m-%d') + datetime.timedelta(days=int(row[5].split("+")[1] if "+" in row[5] else 0))).strftime('%Y-%m-%d')
-            result_row = f"{row[0]:<{TogruteID_width}}{row[2]:<{AvreiseDato_width}}{row[3]:<{AvreiseTid_width}}{AnkomstDato:<{AnkomstDato_width}}{row[5].split('+')[0]:<{AnkomstTid_width}}"
+            AvreiseDato = (datetime.datetime.strptime(
+                row[2], '%Y-%m-%d') + datetime.timedelta(days=int(row[3].split("+")[1] if "+" in row[3] else 0))).strftime('%Y-%m-%d')
+            result_row = f"{row[0]:<{TogruteID_width}}{AvreiseDato:<{AvreiseDato_width}}{row[3].split('+')[0]:<{AvreiseTid_width}}{AnkomstDato:<{AnkomstDato_width}}{row[5].split('+')[0]:<{AnkomstTid_width}}"
             stdscr.addstr(idx + 4, 0, result_row, curses.color_pair(3))
 
         curses.curs_set(0)
