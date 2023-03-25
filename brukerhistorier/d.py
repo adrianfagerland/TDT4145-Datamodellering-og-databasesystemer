@@ -5,7 +5,7 @@ import datetime
 import interface
 
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon på en gitt dato og tidspunkt.
-#    Resultatet skal inkludere reiser samme dag (fra og med tidspunktet) og reiser neste dag. 
+#    Resultatet skal inkludere reiser samme dag (fra og med tidspunktet) og reiser neste dag.
 #    Resultatet skal være sortert etter avgangstidspunkt.
 
 
@@ -13,8 +13,8 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
     AvreiseStasjon = interface.input_stasjon(cursor, stdscr)
     AnkomstStasjon = interface.input_stasjon(cursor, stdscr)
-    Dato = interface.input_dato(cursor, stdscr)
-    Tid = interface.input_klokkeslett(cursor, stdscr)
+    Dato = interface.input_dato(stdscr)
+    Tid = interface.input_klokkeslett(stdscr)
     DatoPlusEnDag = (datetime.datetime.strptime(
         Dato, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
