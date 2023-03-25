@@ -1,6 +1,5 @@
 import sqlite3
-import interface
-import curses
+
 from brukerhistorier import c, d, e, g, h
 
 
