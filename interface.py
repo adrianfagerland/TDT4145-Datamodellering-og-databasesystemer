@@ -1,8 +1,46 @@
 import sqlite3
 import curses
-import user_stories
 import re
+import threading
 
+import user_stories
+import train
+
+
+def init(conn):
+    stdscr = init_screen()
+    stdscr.clear()
+    min_lines = 25
+    prev_lines = 0
+    min_columns = 140
+    prev_columns = 0
+    try:
+        while True:
+            try:
+                current_lines, current_columns = stdscr.getmaxyx()
+
+                if current_lines < min_lines and not (current_lines == prev_lines) or current_columns < min_columns and not (current_columns == prev_columns):
+                    stdscr.clear()
+                    stdscr.addstr(
+                        0, 0, "Please make the terminal window bigger.")
+                    stdscr.getch()
+                    stdscr.refresh()
+                    prev_lines = current_lines
+                else:
+                    stdscr.clear()
+                    curses.curs_set(0)
+                    choice = get_menu_choice(stdscr)
+                    if choice == 6:
+                        break
+                    user_stories.handle(conn, choice, stdscr)
+
+                    # Clear the screen before showing the menu again
+                    stdscr.clear()
+                    prev_lines = current_lines
+            except curses.error:
+                stdscr.clear()
+    finally:
+        end_screen(stdscr)
 
 
 def init_screen():
@@ -21,7 +59,6 @@ def init_screen():
     return stdscr
 
 
-
 def end_screen(stdscr):
     stdscr.keypad(False)
     curses.echo()
@@ -29,10 +66,9 @@ def end_screen(stdscr):
     curses.endwin()
 
 
-
-def print_menu(stdscr, selected, menu_items):
-    stdscr.clear()
-    stdscr.addstr(0, 0, "Velg et alternativ:", curses.color_pair(1) | curses.A_BOLD)
+def print_menu(stdscr: curses.window, selected, menu_items):
+    stdscr.addstr(0, 0, "Velg et alternativ:",
+                  curses.color_pair(1) | curses.A_BOLD)
 
     for index, item in enumerate(menu_items):
         if index == selected:
@@ -40,10 +76,9 @@ def print_menu(stdscr, selected, menu_items):
         else:
             attr = curses.color_pair(3)
 
-        stdscr.addstr(index + 2, 0, f"{index + 1}: {item}", attr)
+        stdscr.addstr(index*2 + 2, 0, f"{index + 1}: {item}", attr)
 
     stdscr.refresh()
-
 
 
 def get_menu_choice(stdscr: curses.window):
@@ -57,56 +92,38 @@ def get_menu_choice(stdscr: curses.window):
     ]
 
     selected = 0
+    stdscr.clear()
     print_menu(stdscr, selected, menu_items)
+
+    stop_event = threading.Event()
+    screen_lock = threading.Lock()
+    train_thread = threading.Thread(
+        target=train.train_animation, args=(stdscr, stop_event, screen_lock))
+    train_thread.daemon = True
+    train_thread.start()
 
     while True:
         key = stdscr.getch()
 
         if key == 27 or key == ord("q"):
+            stop_event.set()
+            train_thread.join()
             return 6
         elif key == curses.KEY_UP:
             selected = (selected - 1) % len(menu_items)
         elif key == curses.KEY_DOWN:
             selected = (selected + 1) % len(menu_items)
         elif key in (curses.KEY_ENTER, ord("\n"), ord("\r")):
+            stop_event.set()
+            train_thread.join()
             return selected + 1
         elif key in range(ord("1"), ord("6") + 1):
+            stop_event.set()
+            train_thread.join()
             return key - ord("0")
 
-        print_menu(stdscr, selected, menu_items)
-
-
-
-def init(conn):
-    stdscr = init_screen()
-    stdscr.clear()
-    min_lines = 10
-    prev_lines = 0
-    while True:
-        try:
-            current_lines, _ = stdscr.getmaxyx()
-            
-            if current_lines < min_lines and not (current_lines == prev_lines):
-                stdscr.clear()
-                stdscr.addstr(0, 0, "Please make the terminal window bigger.")
-                stdscr.getch()
-                stdscr.refresh()
-                prev_lines = current_lines
-            else:
-                stdscr.clear()
-                curses.curs_set(0)
-                choice = get_menu_choice(stdscr)
-                if choice == 6:
-                    break
-                user_stories.handle(conn, choice, stdscr)
-                    
-                # Clear the screen before showing the menu again
-                stdscr.clear()
-                prev_lines = current_lines
-        except curses.error:
-            stdscr.clear()
-    end_screen(stdscr)
-
+        with screen_lock:
+            print_menu(stdscr, selected, menu_items)
 
 
 def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
@@ -126,18 +143,19 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
         if stasjon in stations:
             return stasjon
         else:
-            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.",
+                          curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
 
 
-
-def input_ukedag(stdscr):
+def input_ukedag(stdscr: curses.window):
     stdscr.clear()
     prompt = "Velg ukedag: "
     curses.curs_set(0)
-    ukedager = ["mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag", "søndag"]
+    ukedager = ["mandag", "tirsdag", "onsdag",
+                "torsdag", "fredag", "lørdag", "søndag"]
     stdscr.addstr(0, 0, prompt)  # Changed to row 0
     stdscr.refresh()
     selected = 0
@@ -162,7 +180,6 @@ def input_ukedag(stdscr):
         stdscr.refresh()
 
 
-
 def input_kundenavn(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
@@ -173,7 +190,6 @@ def input_kundenavn(stdscr: curses.window):
     kundenavn = stdscr.getstr().decode('utf-8')
     curses.noecho()
     return kundenavn
-
 
 
 def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
@@ -193,11 +209,11 @@ def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
         if epostadresse not in epostadresser:
             return epostadresse
         else:
-            stdscr.addstr(1, 0, "Epostadressen er allerede i bruk. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(
+                1, 0, "Epostadressen er allerede i bruk. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-
 
 
 def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
@@ -217,11 +233,11 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
         if telefonnummer not in telefonnummre:
             return telefonnummer
         else:
-            stdscr.addstr(1, 0, "Telefonnummeret er allerede i bruk. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(
+                1, 0, "Telefonnummeret er allerede i bruk. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-
 
 
 def get_kundenummer(cursor):
@@ -231,13 +247,13 @@ def get_kundenummer(cursor):
     return kundenummer
 
 
-
 # input-funkskjon for datoer på formatet yyyy-mm-dd
 def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn dato (yyyy-mm-dd): "
-    datoformat = re.compile("/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/")
+    datoformat = re.compile(
+        "/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/")
 
     while True:
         curses.echo()
@@ -245,14 +261,15 @@ def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
         stdscr.refresh()
         dato = stdscr.getstr().decode('utf-8')
         curses.noecho()
-        if re.fullmatch(datoformat, dato): # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
+        # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
+        if re.fullmatch(datoformat, dato):
             return dato
         else:
-            stdscr.addstr(1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(
+                1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-    
 
 
 def input_tid(cursor: sqlite3.Cursor, stdscr: curses.window):
@@ -267,10 +284,11 @@ def input_tid(cursor: sqlite3.Cursor, stdscr: curses.window):
         stdscr.refresh()
         tid = stdscr.getstr().decode('utf-8')
         curses.noecho()
-        if re.fullmatch(tidformat, tid): # Sjekker om tid er på riktig format.
+        if re.fullmatch(tidformat, tid):  # Sjekker om tid er på riktig format.
             return tid
         else:
-            stdscr.addstr(1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(
+                1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
