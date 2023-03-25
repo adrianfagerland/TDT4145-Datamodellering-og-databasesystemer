@@ -8,12 +8,13 @@ import user_stories
 import train
 
 
+
 def init(conn):
     stdscr = init_screen()
     stdscr.clear()
-    min_lines = 25
+    min_lines = 17
     prev_lines = 0
-    min_columns = 140
+    min_columns = 115
     prev_columns = 0
     try:
         while True:
@@ -60,6 +61,7 @@ def init_screen():
     return stdscr
 
 
+
 def end_screen(stdscr):
     stdscr.keypad(False)
     curses.echo()
@@ -80,6 +82,7 @@ def print_menu(stdscr: curses.window, selected, menu_items):
         stdscr.addstr(index*2 + 2, 0, f"{index + 1}: {item}", attr)
 
     stdscr.refresh()
+
 
 
 def get_menu_choice(stdscr: curses.window):
@@ -248,31 +251,30 @@ def get_kundenummer(cursor):
     return kundenummer
 
 
-def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
+
+def input_dato(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn dato (yyyy-mm-dd): "
-    datoformat = re.compile("\d{4}-\d{2}-\d{2}")
-
     while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        dato = stdscr.getstr().decode('utf-8')
-        curses.noecho()
-        # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
-        if re.fullmatch(datoformat, dato):
-            return dato
-        else:
-            stdscr.addstr(
-                1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
+            curses.echo()
+            stdscr.addstr(0, 0, prompt)
             stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+            dato = stdscr.getstr().decode('utf-8')
+            curses.noecho()
+            try:
+                datetime.datetime.strptime(dato, '%Y-%m-%d') # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
+                return dato
+            except ValueError:
+                stdscr.addstr(1, 0, "Ugyldig datoen. Prøv igjen.", curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
+
 
 
 # input-funksjon for tider på formatet hh:mm
-def input_klokkeslett(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_klokkeslett( stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn tid (hh:mm): "
@@ -282,13 +284,12 @@ def input_klokkeslett(cursor: sqlite3.Cursor, stdscr: curses.window):
         curses.echo()
         stdscr.addstr(0, 0, prompt)
         stdscr.refresh()
-        tid = stdscr.getstr().decode('utf-8')
+        tid = stdscr.getstr().decode('utf-8', 'ignore')
         curses.noecho()
-        if re.fullmatch(tidformat, tid):  # Sjekker om tid er på riktig format.
+        if re.fullmatch(tidformat, tid): # Sjekker om tid er på riktig format.
             return tid
         else:
-            stdscr.addstr(
-                1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
