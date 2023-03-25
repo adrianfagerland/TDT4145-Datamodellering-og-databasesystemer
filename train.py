@@ -109,5 +109,5 @@ __/ =| o |=-~~\  /~~\  /~~\  /~~\ ____Y___________|__|__________________________
   \_/      \__/  \__/  \__/  \__/      \_/               \_/   \_/    \_/   \_/""".splitlines()]
 
     for index, line in enumerate(train_animation[counter % len(train_animation)]):
-        stdscr.addstr(index, 70, line)
+        stdscr.addstr(index, 61, line)
     stdscr.refresh()
