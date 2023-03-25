@@ -13,7 +13,7 @@ def init(conn):
     stdscr.clear()
     min_lines = 17
     prev_lines = 0
-    min_columns = 100
+    min_columns = 115
     prev_columns = 0
     try:
         while True:
