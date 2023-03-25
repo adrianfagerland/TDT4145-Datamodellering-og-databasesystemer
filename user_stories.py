@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import sqlite3
 
 from brukerhistorier import c, d, e, g, h
