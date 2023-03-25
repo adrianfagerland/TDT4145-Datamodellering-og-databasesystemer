@@ -263,7 +263,7 @@ def input_dato(cursor: sqlite3.Cursor, stdscr: curses.window):
             dato = stdscr.getstr().decode('utf-8')
             curses.noecho()
             try:
-                datetime.strptime(dato, '%Y-%m-%d') # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
+                datetime.datetime.strptime(dato, '%Y-%m-%d') # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
                 return dato
             except ValueError:
                 stdscr.addstr(1, 0, "Ugyldig datoen. Prøv igjen.", curses.color_pair(4))
