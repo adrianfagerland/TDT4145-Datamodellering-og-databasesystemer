@@ -75,19 +75,7 @@ CREATE TABLE IF NOT EXISTS Vogn (
 CREATE TABLE IF NOT EXISTS Togrute (
     TogruteID VARCHAR(50) NOT NULL,
     Operatør VARCHAR(50) NOT NULL,
-    Togoppsett VARCHAR(50) NOT NULL,    OpptatteSeter AS (
-        SELECT Setenummer, Vogntypenavn, Vognnummer
-        FROM Setebillett
-        JOIN Billett ON Setebillett.BillettID = Billett.BillettID
-        WHERE Ordrenummer IN (
-            SELECT Kundeordrenummer
-            FROM Kundeordre
-            WHERE Rute = ? AND Reisedato = ? AND 
-        ) AND (
-            (Billett.Påstigning < ? AND Billett.Avstigning > ?)
-            OR (Billett.Påstigning >= ? AND Billett.Påstigning < ?)
-        )
-    ),
+    Togoppsett VARCHAR(50) NOT NULL,
     Mandag BOOLEAN NOT NULL,
     Tirsdag BOOLEAN NOT NULL,
     Onsdag BOOLEAN NOT NULL,
@@ -101,7 +89,6 @@ CREATE TABLE IF NOT EXISTS Togrute (
 );
 CREATE TABLE IF NOT EXISTS Togrutetabell (
     TogruteID VARCHAR(50) NOT NULL,
-prompt = "Skriv hvilken stasjon du vil reise til: "
     Ankomst VARCHAR(50) NOT NULL,
     Avgang VARCHAR(50) NOT NULL,
     PRIMARY KEY (TogruteID, Stasjonnummer),
