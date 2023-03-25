@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import sqlite3
 import interface
 import curses
@@ -106,21 +107,23 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     AnkomstStasjon = interface.input_stasjon(cursor, stdscr)
     Dato = interface.input_dato(cursor, stdscr)
     Tid = interface.input_klokkeslett(cursor, stdscr)
+    DatoPlusEnDag = (datetime.strptime(Dato, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
 
     query = f"""
             SELECT tr.TogruteID, start.Stasjon AS AvreiseStasjon, 
                 tgf.Togruteforekomstdato AS AvreiseDato, start.Avgang AS AvreiseTid, 
-                slutt.Stasjon AS AnkomstStasjon, slutt.Ankomst AS AnkomstTid 
+                slutt.Stasjon AS AnkomstStasjon, slutt.Ankomst AS AnkomstTid
             FROM Togrute tr 
             JOIN Togrutetabell start ON tr.TogruteID = start.TogruteID 
             JOIN Togrutetabell slutt ON tr.TogruteID = slutt.TogruteID 
             JOIN Togruteforekomst tgf ON tr.TogruteID = tgf.Rute 
-            WHERE start.Stasjon = ? AND slutt.Stasjon = ? 
-                AND tgf.Togruteforekomstdato BETWEEN ? AND DATEADD(day, 1, ?) 
+            WHERE LOWER(start.Stasjon) = LOWER(?) AND LOWER(slutt.Stasjon) = LOWER(?) 
+                AND (tgf.Togruteforekomstdato = ? OR tgf.Togruteforekomstdato = ?)
             ORDER BY AvreiseDato, AvreiseTid ASC;
             """
+## Brukte denne DATEADD(day, 1, ?) etter And i nest siste linje.
 
-    params = (AvreiseStasjon, AnkomstStasjon, Dato, Tid,)
+    params = (AvreiseStasjon, AnkomstStasjon, Dato, DatoPlusEnDag,)
     cursor.execute(query, params)
 
     ### Skriver resultattabellen i terminalen ###
@@ -128,32 +131,41 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     rows = cursor.fetchall()
 
     if rows:
-        TogruteID_width      =  max(max(row[0], len('TogruteID')) for row in rows) + 6
-        AvreiseStasjon_width =  max(max(row[1], len('AvreiseStasjon'), len(AvreiseStasjon)) for row in rows) + 6
-        AvreiseDato_width    =  max(max(row[2], len('AvreiseDato')) for row in rows) + 6
-        AvreiseTid_width     =  max(max(row[3], len('AvreiseTid')) for row in rows) + 6
-        AnkomstStasjon_width =  max(max(row[4], len('AnkomstStasjon'), len(AnkomstStasjon)) for row in rows) + 6
-        AnkomstDato_width    =  max(max(row[5], len('AnkomstDato')) for row in rows) + 6
-        AnkomstTid_width     =  max(max(row[5], len('AnkomstDato')) for row in rows) + 6
+        TogruteID_width      =  max(max(len(row[0]), len('TogruteID')) for row in rows) + 6
+        AvreiseStasjon_width =  max(max(len(row[1]), len('AvreiseStasjon'), len(AvreiseStasjon)) for row in rows) + 6
+        AvreiseDato_width    =  max(max(len(row[2]), len('AvreiseDato')) for row in rows) + 6
+        AvreiseTid_width     =  max(max(len(row[3]), len('AvreiseTid')) for row in rows) + 6
+        AnkomstStasjon_width =  max(max(len(row[4]), len('AnkomstStasjon'), len(AnkomstStasjon)) for row in rows) + 6
+#        AnkomstDato_width    =  max(max(len(row[5]), len('AnkomstDato')) for row in rows) + 6 skal egentlig v're row[5], men tar den vekk midlertidig
+        AnkomstTid_width     =  max(max(len(row[5]), len('AnkomstTid')) for row in rows) + 6
 
         header = f"""{'TogruteID':<{TogruteID_width}}
                      {'AvreiseStasjon':<{AvreiseStasjon_width}}
                      {'AvreiseDato':<{AvreiseDato_width}}
                      {'AvreiseTid':<{AvreiseTid_width}}
                      {'AnkomstStasjon':<{AnkomstStasjon_width}}
-                     {'AnkomstDato':<{AnkomstDato_width}}
-                     {'AnkomstTid':<{AnkomstTid_width}}"""
+
+                     {'AnkomstTid':<{AnkomstTid_width}}"""# {'AnkomstDato':<{AnkomstDato_width}} skal egentlig staa i den tomme linjen.
         stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
         stdscr.addstr(1, 0, "-" * (len(header)))
 
         for idx, row in enumerate(rows):
-            result_row = f"""{row[0]:<{TogruteID_width}}
+            if row[1].lower() == stasjon:
+                result_row = f"""{row[0]:<{TogruteID_width}}
+                                 {row[1]:<{AvreiseStasjon_width}}
+                                 {row[2]:<{AvreiseDato_width}}
+                                 {row[3]:<{AvreiseTid_width}}
+                                 {row[4]:<{AnkomstStasjon_width}}
+                                 
+                                 {row[5]:<{AnkomstTid_width}}"""
+            else:
+                result_row = f"""{row[0]:<{TogruteID_width}}
                              {row[1]:<{AvreiseStasjon_width}}
                              {row[2]:<{AvreiseDato_width}}
                              {row[3]:<{AvreiseTid_width}}
                              {row[4]:<{AnkomstStasjon_width}}
-                             {row[5]:<{AnkomstDato_width}}
-                             {row[6]:<{AnkomstTid_width}}"""
+                             
+                             {row[5]:<{AnkomstTid_width}}"""#{row[5]:<{AnkomstDato_width}} skal egentlig staa i den tomme linjen.
             stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
 
         stdscr.refresh()
