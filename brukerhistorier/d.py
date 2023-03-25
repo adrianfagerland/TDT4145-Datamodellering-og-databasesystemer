@@ -14,7 +14,7 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     AnkomstStasjon = interface.input_stasjon(cursor, stdscr)
     Dato = interface.input_dato(cursor, stdscr)
     Tid = interface.input_klokkeslett(cursor, stdscr)
-    DatoPlusEnDag = (datetime.strptime(Dato, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    DatoPlusEnDag = (datetime.datetime.strptime(Dato, '%Y-%m-%d') + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
     query = f"""
             SELECT tr.TogruteID, start.Stasjon AS AvreiseStasjon, 
@@ -46,33 +46,12 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
 #        AnkomstDato_width    =  max(max(len(row[5]), len('AnkomstDato')) for row in rows) + 6 skal egentlig v're row[5], men tar den vekk midlertidig
         AnkomstTid_width     =  max(max(len(row[5]), len('AnkomstTid')) for row in rows) + 6
 
-        header = f"""{'TogruteID':<{TogruteID_width}}
-                     {'AvreiseStasjon':<{AvreiseStasjon_width}}
-                     {'AvreiseDato':<{AvreiseDato_width}}
-                     {'AvreiseTid':<{AvreiseTid_width}}
-                     {'AnkomstStasjon':<{AnkomstStasjon_width}}
-
-                     {'AnkomstTid':<{AnkomstTid_width}}"""# {'AnkomstDato':<{AnkomstDato_width}} skal egentlig staa i den tomme linjen.
+        header = f"{'TogruteID':<{TogruteID_width}}{'AvreiseStasjon':<{AvreiseStasjon_width}}{'AvreiseDato':<{AvreiseDato_width}}{'AvreiseTid':<{AvreiseTid_width}}{'AnkomstStasjon':<{AnkomstStasjon_width}}{'AnkomstTid':<{AnkomstTid_width}}"# {'AnkomstDato':<{AnkomstDato_width}} skal egentlig staa i den tomme linjen.
         stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
         stdscr.addstr(1, 0, "-" * (len(header)))
 
         for idx, row in enumerate(rows):
-            if row[1].lower() == stasjon:
-                result_row = f"""{row[0]:<{TogruteID_width}}
-                                 {row[1]:<{AvreiseStasjon_width}}
-                                 {row[2]:<{AvreiseDato_width}}
-                                 {row[3]:<{AvreiseTid_width}}
-                                 {row[4]:<{AnkomstStasjon_width}}
-                                 
-                                 {row[5]:<{AnkomstTid_width}}"""
-            else:
-                result_row = f"""{row[0]:<{TogruteID_width}}
-                             {row[1]:<{AvreiseStasjon_width}}
-                             {row[2]:<{AvreiseDato_width}}
-                             {row[3]:<{AvreiseTid_width}}
-                             {row[4]:<{AnkomstStasjon_width}}
-                             
-                             {row[5]:<{AnkomstTid_width}}"""#{row[5]:<{AnkomstDato_width}} skal egentlig staa i den tomme linjen.
+            result_row = f"{row[0]:<{TogruteID_width}}{row[1]:<{AvreiseStasjon_width}}{row[2]:<{AvreiseDato_width}}{row[3]:<{AvreiseTid_width}}{row[4]:<{AnkomstStasjon_width}}{row[5]:<{AnkomstTid_width}}"#{row[5]:<{AnkomstDato_width}} skal egentlig staa i den tomme linjen.
             stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
 
         stdscr.refresh()
