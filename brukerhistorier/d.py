@@ -5,7 +5,7 @@ import datetime
 import interface
 
 # d) Søk etter togruter mellom en startstasjon og en sluttstasjon på en gitt dato og tidspunkt.
-#    Resultatet inkludere reiser samme dag fra og med tidspunktet og reiser neste dag.
+#    Resultatet skal inkludere reiser samme dag (fra og med tidspunktet) og reiser neste dag. 
 #    Resultatet skal være sortert etter avgangstidspunkt.
 
 
