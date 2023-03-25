@@ -265,7 +265,7 @@ def input_klokkeslett(cursor: sqlite3.Cursor, stdscr: curses.window):
         curses.echo()
         stdscr.addstr(0, 0, prompt)
         stdscr.refresh()
-        tid = stdscr.getstr().decode('utf-8')
+        tid = stdscr.getstr().decode('utf-8', 'ignore')
         curses.noecho()
         if re.fullmatch(tidformat, tid): # Sjekker om tid er på riktig format.
             return tid

@@ -18,7 +18,7 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
     query = f"""
         SELECT t1.TogruteID, t1.Stasjon AS EndStasjon, t2.Ankomst AS CurrentStasjonAnkomst, t2.Avgang AS CurrentStasjonAvgang
         FROM Togrutetabell t1
-        INNER JOIN Togrutetabell t2 ON t1.TogruteID = t2.TogruteID
+        INNER JOIN   ON t1.TogruteID = t2.TogruteID
         WHERE t1.Stasjonnummer = (
             SELECT MAX(Stasjonnummer)
             FROM Togrutetabell
@@ -96,43 +96,31 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
 
 
 
-# d) Søk etter togruter mellom en startstasjon og en sluttstasjon
+# d) Søk etter togruter mellom en startstasjon og en sluttstasjon på en gitt dato og tidspunkt.
+#    Resultatet inkludere reiser samme dag fra og med tidspunktet og reiser neste dag. 
+#    Resultatet skal være sortert etter avgangstidspunkt.
 
-#def search_togruter(conn, startstasjon, sluttstasjon, dato, klokkeslett):
 def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
-    print("Angi en startstasjon: \n")
-    startstasjon = interface.input_stasjon(cursor, stdscr)
-    print("\nAngi en sluttstasjon: \n")
-    sluttstasjon = interface.input_stasjon(cursor, stdscr)
-    print("\nAngi en dato: \n")
-    dato = interface.input_dato(cursor, stdscr)
-    print("\nAngi et klokkeslett: \n")
-    klokkeslett = interface.input_klokkeslett(cursor, stdscr)
+    AvreiseStasjon = interface.input_stasjon(cursor, stdscr)
+    AnkomstStasjon = interface.input_stasjon(cursor, stdscr)
+    Dato = interface.input_dato(cursor, stdscr)
+    Tid = interface.input_klokkeslett(cursor, stdscr)
 
-##    query = f"""
-##           SELECT DISTINCT Togrute.Togavgangstid, Togrute.Togankomsttid, Togrute.TogruteID
-##           FROM Togrute
-##           JOIN Delstrekning AS Start ON Start.DelstrekningID = Togrute.Startdelstrekning
-##           JOIN Delstrekning AS Slutt ON Slutt.DelstrekningID = Togrute.Sluttdelstrekning
-##           WHERE Start.Startstasjon = ? AND Slutt.Sluttstasjon = ?
-##           AND Togrute.Dato IN (?, date(?, '+1 day'))
-##           AND Togrute.Togavgangstid >= ?
-##           ORDER BY Togrute.Togavgangstid ASC;
-##        
-##           """
-
-    query = """
-            SELECT *
-            FROM Delstrekning
-            WHERE Startstasjon = ?
-              AND Sluttstasjon = ?
-              AND strftime('%Y-%m-%d %H:%M', Tidspunkt) >= ?
-              AND strftime('%Y-%m-%d', Tidspunkt) <= date(?, '+1 day')
-            ORDER BY Tidspunkt ASC;
+    query = f"""
+            SELECT tr.TogruteID, start.Stasjon AS AvreiseStasjon, 
+                tgf.Togruteforekomstdato AS AvreiseDato, start.Avgang AS AvreiseTid, 
+                slutt.Stasjon AS AnkomstStasjon, slutt.Ankomst AS AnkomstTid 
+            FROM Togrute tr 
+            JOIN Togrutetabell start ON tr.TogruteID = start.TogruteID 
+            JOIN Togrutetabell slutt ON tr.TogruteID = slutt.TogruteID 
+            JOIN Togruteforekomst tgf ON tr.TogruteID = tgf.Rute 
+            WHERE start.Stasjon = ? AND slutt.Stasjon = ? 
+                AND tgf.Togruteforekomstdato BETWEEN ? AND DATEADD(day, 1, ?) 
+            ORDER BY AvreiseDato, AvreiseTid ASC;
             """
-    
-    params = ((dato, klokkeslett, startstasjon, sluttstasjon,))
+
+    params = (AvreiseStasjon, AnkomstStasjon, Dato, Tid,)
     cursor.execute(query, params)
 
     ### Skriver resultattabellen i terminalen ###
@@ -140,20 +128,40 @@ def search_togruter(conn: sqlite3.Connection, stdscr: curses.window):
     rows = cursor.fetchall()
 
     if rows:
-        togrute_id_width = max(max(len(row[0]), len('TogruteID')) for row in rows) + 6
-        endestasjon_width = max(max(len(row[1]), len(stasjon), len('Endestasjon')) for row in rows) + 6
-        avgang_ankomst_width = max(max(len(row[2]), len(row[3]), len('Avgang/Ankomst')) for row in rows) + 6
+        TogruteID_width      =  max(max(row[0], len('TogruteID')) for row in rows) + 6
+        AvreiseStasjon_width =  max(max(row[1], len('AvreiseStasjon'), len(AvreiseStasjon)) for row in rows) + 6
+        AvreiseDato_width    =  max(max(row[2], len('AvreiseDato')) for row in rows) + 6
+        AvreiseTid_width     =  max(max(row[3], len('AvreiseTid')) for row in rows) + 6
+        AnkomstStasjon_width =  max(max(row[4], len('AnkomstStasjon'), len(AnkomstStasjon)) for row in rows) + 6
+        AnkomstDato_width    =  max(max(row[5], len('AnkomstDato')) for row in rows) + 6
+        AnkomstTid_width     =  max(max(row[5], len('AnkomstDato')) for row in rows) + 6
 
-        header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang/Ankomst':<{avgang_ankomst_width}}"
+        header = f"""{'TogruteID':<{TogruteID_width}}
+                     {'AvreiseStasjon':<{AvreiseStasjon_width}}
+                     {'AvreiseDato':<{AvreiseDato_width}}
+                     {'AvreiseTid':<{AvreiseTid_width}}
+                     {'AnkomstStasjon':<{AnkomstStasjon_width}}
+                     {'AnkomstDato':<{AnkomstDato_width}}
+                     {'AnkomstTid':<{AnkomstTid_width}}"""
         stdscr.addstr(0, 0, header, curses.color_pair(1) | curses.A_BOLD)
         stdscr.addstr(1, 0, "-" * (len(header)))
 
-    for idx, row in enumerate(rows):
-        result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"
-        stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
+        for idx, row in enumerate(rows):
+            result_row = f"""{row[0]:<{TogruteID_width}}
+                             {row[1]:<{AvreiseStasjon_width}}
+                             {row[2]:<{AvreiseDato_width}}
+                             {row[3]:<{AvreiseTid_width}}
+                             {row[4]:<{AnkomstStasjon_width}}
+                             {row[5]:<{AnkomstDato_width}}
+                             {row[6]:<{AnkomstTid_width}}"""
+            stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
 
-    stdscr.refresh()
-    stdscr.getch()
+        stdscr.refresh()
+        stdscr.getch()
+    else:
+        stdscr.addstr(0, 0, "Ingen resultater", curses.color_pair(2))
+        stdscr.refresh()
+        stdscr.getch()
 
 
 
