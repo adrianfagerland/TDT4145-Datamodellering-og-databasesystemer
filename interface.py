@@ -11,7 +11,7 @@ import train
 def init(conn):
     stdscr = init_screen()
     stdscr.clear()
-    min_lines = 25
+    min_lines = 18
     prev_lines = 0
     min_columns = 140
     prev_columns = 0
