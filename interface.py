@@ -11,9 +11,9 @@ import train
 def init(conn):
     stdscr = init_screen()
     stdscr.clear()
-    min_lines = 18
+    min_lines = 17
     prev_lines = 0
-    min_columns = 140
+    min_columns = 100
     prev_columns = 0
     try:
         while True:
