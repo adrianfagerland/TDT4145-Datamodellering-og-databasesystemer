@@ -3,6 +3,7 @@ import curses
 import re
 import datetime
 import threading
+from typing import Union, Callable
 
 import user_stories
 import train
@@ -179,109 +180,89 @@ def velg_ukedag(stdscr: curses.window):
     return selectable_menu(stdscr, prompt, ukedager).capitalize()
 
 
-def input_kundenavn(stdscr: curses.window):
+# Den første verdien i tuplen er tabellen, den andre er kolonnen som skal hentes. Den tredje er hvilken feilmelding som skal vises hvis valideringen feiler.
+def input_str(stdscr: 'curses.window', prompt: str, validation: Union[tuple[sqlite3.Connection, str, str, str], Callable[[str], bool]] = None):
     stdscr.clear()
     curses.curs_set(2)
-    prompt = "Skriv inn kundenavn: "
     curses.echo()
-    stdscr.addstr(0, 0, prompt)
-    stdscr.refresh()
-    kundenavn = stdscr.getstr().decode('utf-8')
-    curses.noecho()
-    return kundenavn
-
-
-def input_epost(cursor: sqlite3.Cursor, stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    prompt = "Skriv inn e-post: "
-    cursor.execute("SELECT LOWER(Epostadresse) FROM Kunde;")
-    epostadresser = [row[0] for row in cursor.fetchall()]
+    if validation is None:
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        s = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+        return s
+    validation_type = type(validation)
+    if validation_type == tuple:
+        cursor = validation[0].cursor()
+        cursor.execute(
+            f"SELECT LOWER({validation[2]}) FROM {validation[1]};")
+        taken = [row[0] for row in cursor.fetchall()]
 
     while True:
         curses.echo()
         stdscr.addstr(0, 0, prompt)
         stdscr.refresh()
-        epostadresse = stdscr.getstr().decode('utf-8').lower()
+        s = stdscr.getstr().decode('utf-8').lower()
         curses.noecho()
-
-        if epostadresse not in epostadresser:
-            return epostadresse
+        if validation_type == tuple:
+            if s not in taken:
+                return s
+            else:
+                stdscr.addstr(
+                    1, 0, f"{validation[3]}. Prøv igjen.", curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
         else:
-            stdscr.addstr(
-                1, 0, "Epostadressen er allerede i bruk. Prøv igjen.", curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+            if validation(s):
+                return s
+            else:
+                stdscr.addstr(
+                    1, 0, f"Ugyldig input. Prøv igjen.", curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
 
 
+def input_kundenavn(stdscr: curses.window):
+    prompt = "Skriv inn kundenavn: "
+    return input_str(stdscr, prompt)
+
+
+# Validering av epostaddresser TODO
+def input_epost(conn: sqlite3.Connection, stdscr: curses.window):
+    return input_str(stdscr, "Skriv inn e-post: ", validation=(conn, "Kunde", "Epostadresse", "E-postadressen er allerede i bruk"))
+
+
+# Validering av mobilnummer TODO
 def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    prompt = "Skriv inn telefonnummer: "
-    cursor.execute("SELECT LOWER(Mobilnummer) FROM Kunde;")
-    telefonnummre = [row[0] for row in cursor.fetchall()]
+    return input_str(stdscr, "Skriv inn telefonnummer: ", validation=(cursor.connection, "Kunde", "Mobilnummer", "Mobilnummeret er allerede i bruk"))
 
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        telefonnummer = stdscr.getstr().decode('utf-8').lower()
-        curses.noecho()
 
-        if telefonnummer not in telefonnummre:
-            return telefonnummer
-        else:
-            stdscr.addstr(
-                1, 0, "Telefonnummeret er allerede i bruk. Prøv igjen.", curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+def valider_dato(dato: str):
+    try:
+        # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
+        datetime.datetime.strptime(dato, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
 
 
 def input_dato(stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    prompt = "Skriv inn dato (yyyy-mm-dd): "
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        dato = stdscr.getstr().decode('utf-8')
-        curses.noecho()
-        try:
-            # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
-            datetime.datetime.strptime(dato, '%Y-%m-%d')
-            return dato
-        except ValueError:
-            stdscr.addstr(1, 0, "Ugyldig datoen. Prøv igjen.",
-                          curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+    return input_str(stdscr, "Skriv inn dato (yyyy-mm-dd): ", validation=valider_dato)
+
+
+def valider_klokkeslett(tid: str):
+    tidformat = re.compile("^([0-1][0-9]|2[0-3]):([0-5][0-9])$")
+    if re.fullmatch(tidformat, tid):  # Sjekker om tid er på riktig format.
+        return True
+    else:
+        return False
 
 
 # input-funksjon for tider på formatet hh:mm
 def input_klokkeslett(stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    prompt = "Skriv inn tid (hh:mm): "
-    tidformat = re.compile("^([0-1][0-9]|2[0-3]):([0-5][0-9])$")
-
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        tid = stdscr.getstr().decode('utf-8', 'ignore')
-        curses.noecho()
-        if re.fullmatch(tidformat, tid):  # Sjekker om tid er på riktig format.
-            return tid
-        else:
-            stdscr.addstr(
-                1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+    return input_str(stdscr, "Skriv inn klokkeslett (hh:mm): ", validation=valider_klokkeslett)
 
 
 def login(conn: sqlite3.Connection, stdscr: curses.window):
