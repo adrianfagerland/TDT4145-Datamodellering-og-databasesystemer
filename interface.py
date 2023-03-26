@@ -136,14 +136,14 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window, prompt: str, ex
         SELECT Stasjonnavn
         FROM Stasjon""")
     stations = [row[0] for row in cursor.fetchall() if row[0] not in exclude]
-    return print_login_type_menu(stdscr, prompt, stations)
+    return selectable_menu(stdscr, prompt, stations)
 
 
-def input_avreisestasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
+def velg_avreisestasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
     return input_stasjon(cursor, stdscr, "Velg avreisestasjon:")
 
 
-def input_ankomststasjon(cursor: sqlite3.Cursor, stdscr: curses.window, startstasjon):
+def velg_ankomststasjon(cursor: sqlite3.Cursor, stdscr: curses.window, startstasjon):
     return input_stasjon(cursor, stdscr, "Velg ankomststasjon:", startstasjon)
 
 
@@ -289,7 +289,7 @@ def input_klokkeslett(stdscr: curses.window):
             stdscr.clear()
 
 
-def print_login_type_menu(stdscr: curses.window, prompt, options: list):
+def selectable_menu(stdscr: curses.window, prompt, options: list):
     curses.curs_set(0)
     curses.noecho()
     selected_login_type = 0
@@ -319,7 +319,7 @@ def login(conn: sqlite3.Connection, stdscr: curses.window):
 
     login_types = ["Mobilnummer", "Kundenummer"]
     prompt = "Hvordan vil du logge inn?"
-    login_type = print_login_type_menu(stdscr, prompt, login_types)
+    login_type = selectable_menu(stdscr, prompt, login_types)
 
     stdscr.clear()
     curses.curs_set(2)
@@ -481,25 +481,9 @@ def input_togrute(cursor: sqlite3.Cursor, stdscr: curses.window):
 
 
 def velg_billettype(cursor: sqlite3.Cursor, stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    prompt = "Velg billettype med å skrive 'sete' eller 'seng': "
-
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        billetttype = stdscr.getstr().decode('utf-8').lower()
-        curses.noecho()
-
-        if billetttype == "seng" or billetttype == "sete":
-            return billetttype
-        else:
-            stdscr.addstr(1, 0, "Ugyldig bilettype. Prøv igjen.",
-                          curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+    prompt = "Velg billettype:"
+    options = ["Seng", "Sete"]
+    return selectable_menu(stdscr, prompt, options).lower()
 
 
 def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, type):
