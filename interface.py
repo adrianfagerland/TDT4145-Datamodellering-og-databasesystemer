@@ -129,7 +129,32 @@ def get_menu_choice(stdscr: curses.window):
             print_menu(stdscr, selected, menu_items)
 
 
-def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window, prompt: str, exclude: str = ""):
+def selectable_menu(stdscr: curses.window, prompt, options: list):
+    curses.curs_set(0)
+    curses.noecho()
+    selected_login_type = 0
+    while True:
+        stdscr.clear()
+        stdscr.addstr(0, 0, prompt, curses.color_pair(1))
+        for i, display_text in enumerate(options):
+            if i == selected_login_type:
+                stdscr.addstr(i+2, 0, f"{display_text}",
+                              curses.color_pair(2) | curses.A_REVERSE)
+            else:
+                stdscr.addstr(
+                    i+2, 0, f"{display_text}", curses.color_pair(3))
+        stdscr.refresh()
+
+        c = stdscr.getch()
+        if c == curses.KEY_UP and selected_login_type > 0:
+            selected_login_type -= 1
+        elif c == curses.KEY_DOWN and selected_login_type < len(options) - 1:
+            selected_login_type += 1
+        elif c == curses.KEY_ENTER or c == 10 or c == 13:
+            return options[selected_login_type]
+
+
+def velg_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window, prompt: str, exclude: str = ""):
     stdscr.clear()
     curses.curs_set(2)
     cursor.execute("""
@@ -140,41 +165,18 @@ def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window, prompt: str, ex
 
 
 def velg_avreisestasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
-    return input_stasjon(cursor, stdscr, "Velg avreisestasjon:")
+    return velg_stasjon(cursor, stdscr, "Velg avreisestasjon:")
 
 
 def velg_ankomststasjon(cursor: sqlite3.Cursor, stdscr: curses.window, startstasjon):
-    return input_stasjon(cursor, stdscr, "Velg ankomststasjon:", startstasjon)
+    return velg_stasjon(cursor, stdscr, "Velg ankomststasjon:", startstasjon)
 
 
 def input_ukedag(stdscr: curses.window):
-    stdscr.clear()
     prompt = "Velg ukedag: "
-    curses.curs_set(0)
-    ukedager = ["mandag", "tirsdag", "onsdag",
-                "torsdag", "fredag", "lørdag", "søndag"]
-    stdscr.addstr(0, 0, prompt)  # Changed to row 0
-    stdscr.refresh()
-    selected = 0
-    while True:
-        for idx, ukedag in enumerate(ukedager):
-            if idx == selected:
-                attr = curses.color_pair(2) | curses.A_REVERSE
-            else:
-                attr = curses.color_pair(3)
-
-            stdscr.addstr(idx + 1, 0, ukedag, attr)
-
-        key = stdscr.getch()
-
-        if key == curses.KEY_UP:
-            selected = (selected - 1) % len(ukedager)
-        elif key == curses.KEY_DOWN:
-            selected = (selected + 1) % len(ukedager)
-        elif key in (curses.KEY_ENTER, ord("\n"), ord("\r")):
-            return ukedager[selected]
-
-        stdscr.refresh()
+    ukedager = ["Mandag", "Tirsdag", "Onsdag",
+                "Torsdag", "Fredag", "Lørdag", "Søndag"]
+    return selectable_menu(stdscr, prompt, ukedager).capitalize()
 
 
 def input_kundenavn(stdscr: curses.window):
@@ -287,31 +289,6 @@ def input_klokkeslett(stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-
-
-def selectable_menu(stdscr: curses.window, prompt, options: list):
-    curses.curs_set(0)
-    curses.noecho()
-    selected_login_type = 0
-    while True:
-        stdscr.clear()
-        stdscr.addstr(0, 0, prompt, curses.color_pair(1))
-        for i, display_text in enumerate(options):
-            if i == selected_login_type:
-                stdscr.addstr(i+2, 0, f"{display_text}",
-                              curses.color_pair(2) | curses.A_REVERSE)
-            else:
-                stdscr.addstr(
-                    i+2, 0, f"{display_text}", curses.color_pair(3))
-        stdscr.refresh()
-
-        c = stdscr.getch()
-        if c == curses.KEY_UP and selected_login_type > 0:
-            selected_login_type -= 1
-        elif c == curses.KEY_DOWN and selected_login_type < len(options) - 1:
-            selected_login_type += 1
-        elif c == curses.KEY_ENTER or c == 10 or c == 13:
-            return options[selected_login_type]
 
 
 def login(conn: sqlite3.Connection, stdscr: curses.window):
