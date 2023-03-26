@@ -46,6 +46,7 @@ def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
     cursor.execute(query, (kunde,))
     rows = cursor.fetchall()
     stdscr.clear()
+    interface.check_enough_space(stdscr, len(rows)+4)
     for i, row in enumerate(rows):
         stdscr.addstr(i, 0, str(row))
     stdscr.refresh()

@@ -41,4 +41,3 @@ def setup_database(conn: sqlite3.Connection):
     execute_sql_file(conn, "brukerhistorier/a.sql")
     execute_sql_file(conn, "brukerhistorier/b.sql")
     execute_sql_file(conn, "brukerhistorier/f.sql")
-    execute_sql_file(conn, "mock_data.sql")
