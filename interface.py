@@ -10,41 +10,45 @@ import train
 
 
 # Antar norske mobilnummer, består av 8 siffer
+MIN_LINES = 17
+MIN_COLUMNS = 115
+
 
 def init(conn):
     stdscr = init_screen()
     stdscr.clear()
-    min_lines = 17
     prev_lines = 0
-    min_columns = 115
     prev_columns = 0
     try:
         while True:
             try:
-                current_lines, current_columns = stdscr.getmaxyx()
+                check_enough_space(stdscr, MIN_LINES, MIN_COLUMNS)
+                stdscr.clear()
+                curses.curs_set(0)
+                choice = get_menu_choice(stdscr)
+                if choice == 6:
+                    break
+                user_stories.handle(conn, choice, stdscr)
 
-                if current_lines < min_lines and not (current_lines == prev_lines) or current_columns < min_columns and not (current_columns == prev_columns):
-                    stdscr.clear()
-                    stdscr.addstr(
-                        0, 0, "Please make the terminal window bigger.")
-                    stdscr.getch()
-                    stdscr.refresh()
-                    prev_lines = current_lines
-                else:
-                    stdscr.clear()
-                    curses.curs_set(0)
-                    choice = get_menu_choice(stdscr)
-                    if choice == 6:
-                        break
-                    user_stories.handle(conn, choice, stdscr)
-
-                    # Clear the screen before showing the menu again
-                    stdscr.clear()
-                    prev_lines = current_lines
+                # Clear the screen before showing the menu again
+                stdscr.clear()
             except curses.error:
                 stdscr.clear()
     finally:
         end_screen(stdscr)
+
+
+def check_enough_space(stdscr: curses.window, min_lines: int, min_columns: int = MIN_COLUMNS):
+    current_lines, current_columns = stdscr.getmaxyx()
+    curses.curs_set(0)
+    if current_lines < min_lines or current_columns < min_columns:
+        stdscr.clear()
+        stdscr.addstr(
+            0, 0, "Please make the terminal window bigger to fit all the content.")
+        stdscr.getch()
+        stdscr.refresh()
+        return False
+    return True
 
 
 def init_screen():
