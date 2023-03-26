@@ -8,7 +8,7 @@ import interface
 
 def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
-    stasjon = interface.input_stasjon(cursor, stdscr)
+    stasjon = interface.input_avreisestasjon(cursor, stdscr)
     ukedag = interface.input_ukedag(stdscr)
 
     query = f"""
