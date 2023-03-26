@@ -44,6 +44,7 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
 
     stdscr.addstr(0, 0, f"Togruter fra {stasjon} på {ukedag.lower()}er.", curses.color_pair(
         2) | curses.A_BOLD)
+    stdscr.refresh()
 
     if rows:
         togrute_id_width = max(
@@ -56,6 +57,9 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
         header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang':<{avgang_ankomst_width}}"
         stdscr.addstr(2, 0, header, curses.color_pair(1) | curses.A_BOLD)
         stdscr.addstr(3, 0, "-" * (len(header)))
+    else:
+        stdscr.addstr(2, 0, "Ingen resultater funnet",
+                      curses.color_pair(1) | curses.A_BOLD)
 
     for idx, row in enumerate(rows):
         result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[3][:5]:<{avgang_ankomst_width}}"

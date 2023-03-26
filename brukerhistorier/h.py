@@ -12,22 +12,18 @@ def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
     query = f"""
     SELECT 
     Kunde.Kundenavn,
-    Kunde.Epostadresse,
-    Kunde.Mobilnummer,
     Kundeordre.Kundeordrenummer,
     Togrute.TogruteID,
     Togrute.Operatør,
     Togruteforekomst.Togruteforekomstdato AS Reisedato,
-    Kundeordre.Kjøpsdato,
-    Kundeordre.Kjøpstidspunkt,
-    Billett.BillettID,
     Billett.Påstigning,
     Billett.Avstigning,
     Billett.Vogn,
     COALESCE(Setebillett.Setenummer, Sengebillett.Sengenummer) AS Sete_eller_Seng,
+    COUNT(*) AS Antall_Billetter,
     CASE 
-        WHEN Setebillett.BillettID IS NOT NULL THEN 'Sitte'
         WHEN Sengebillett.BillettID IS NOT NULL THEN 'Sove'
+        WHEN Setebillett.BillettID IS NOT NULL THEN 'Sitte'
         ELSE NULL
     END AS Sete_eller_Seng_Type
     FROM Kunde
@@ -40,6 +36,7 @@ def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
     LEFT JOIN Vogntype AS SeteVogntype ON Setebillett.Vogntypenavn = SeteVogntype.Vogntypenavn
     LEFT JOIN Vogntype AS SengVogntype ON Sengebillett.Vogntypenavn = SengVogntype.Vogntypenavn
     WHERE Kunde.Kundenummer = ? AND Togruteforekomst.Togruteforekomstdato >= CURRENT_DATE
+    GROUP BY Kundeordre.Kundeordrenummer
     ORDER BY Togruteforekomst.Togruteforekomstdato;"""
 
     cursor = conn.cursor()
@@ -47,7 +44,22 @@ def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
     rows = cursor.fetchall()
     stdscr.clear()
     interface.check_enough_space(stdscr, len(rows)+4)
-    for i, row in enumerate(rows):
-        stdscr.addstr(i, 0, str(row))
+    stdscr.addstr(0, 0, f"Informasjon om {rows[0][0]} sine fremtidige kjøp:", curses.color_pair(
+        2) | curses.A_BOLD)
+    stdscr.refresh()
+    # if rows:
+    #     togrute_id_width = max(
+    #         max(len(row[0]), len('TogruteID')) for row in rows) + 6
+    #     endestasjon_width = max(
+    #         max(len(row[1]), len('Endestasjon')) for row in rows) + 6
+    #     avgang_ankomst_width = 10
+
+    #     header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang':<{avgang_ankomst_width}}"
+    #     stdscr.addstr(2, 0, header, curses.color_pair(1) | curses.A_BOLD)
+    #     stdscr.addstr(3, 0, "-" * (len(header)))
+
+    for idx, row in enumerate(rows):
+        result_row = row
+        stdscr.addstr(idx + 4, 0, f"{result_row}", curses.color_pair(3))
     stdscr.refresh()
     stdscr.getch()

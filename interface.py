@@ -44,7 +44,7 @@ def check_enough_space(stdscr: curses.window, min_lines: int, min_columns: int =
     if current_lines < min_lines or current_columns < min_columns:
         stdscr.clear()
         stdscr.addstr(
-            0, 0, "Please make the terminal window bigger to fit all the content.")
+            0, 0, "Vennligst gjør vinduet større for at alt skal få plass", curses.color_pair(4))
         stdscr.getch()
         stdscr.refresh()
         return False
@@ -283,7 +283,6 @@ def login(conn: sqlite3.Connection, stdscr: curses.window):
         cursor.execute(query, (kunde_id,))
 
         # Skriv ut resultatene
-        stdscr.clear()
         result = cursor.fetchone()
         curses.noecho()
 
@@ -292,7 +291,7 @@ def login(conn: sqlite3.Connection, stdscr: curses.window):
             return kundenummer
         else:
             stdscr.addstr(
-                1, 0, f"Finner ingen kunde for dette {login_type}et. Prøv igjen.", curses.color_pair(4))
+                1, 0, f"Finner ingen kunde for dette {login_type.lower()}et. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
