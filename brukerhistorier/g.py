@@ -57,6 +57,8 @@ OpptatteSeter AS (
     WHERE Kundeordre.Reisedato = ? AND Kundeordre.Rute = ?
     AND (Av.Stasjonnummer BETWEEN PaStasjon.Stasjonnummer AND AvStasjon.Stasjonnummer
         OR Pa.Stasjonnummer BETWEEN PaStasjon.Stasjonnummer AND AvStasjon.Stasjonnummer)
+    AND NOT (Av.Stasjonnummer = PaStasjon.Stasjonnummer OR Pa.Stasjonnummer = AvStasjon.Stasjonnummer)
+    AND Billett.Vogn = ?
 ),
 LedigeSeter AS (
     SELECT Setenummer, Sittetypenavn, Vognnummer
@@ -69,7 +71,7 @@ LedigeSeter AS (
 )
 SELECT * FROM LedigeSeter;
         """,
-                       (togrute, vognnummer, startstasjon, sluttstasjon, reisedato, togrute))
+                       (togrute, vognnummer, startstasjon, sluttstasjon, reisedato, togrute, vognnummer))
 
         antallTilgjengeligeBilletter = 0
         results = cursor.fetchall()
