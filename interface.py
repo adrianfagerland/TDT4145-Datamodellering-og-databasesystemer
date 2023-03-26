@@ -173,13 +173,6 @@ def velg_ankomststasjon(cursor: sqlite3.Cursor, stdscr: curses.window, startstas
     return velg_stasjon(cursor, stdscr, "Velg ankomststasjon:", startstasjon)
 
 
-def velg_ukedag(stdscr: curses.window):
-    prompt = "Velg ukedag: "
-    ukedager = ["Mandag", "Tirsdag", "Onsdag",
-                "Torsdag", "Fredag", "Lørdag", "Søndag"]
-    return selectable_menu(stdscr, prompt, ukedager).capitalize()
-
-
 # Den første verdien i tuplen er tabellen, den andre er kolonnen som skal hentes. Den tredje er hvilken feilmelding som skal vises hvis valideringen feiler.
 def input_str(stdscr: 'curses.window', prompt: str, validation: Union[tuple[sqlite3.Connection, str, str, str], Callable[[str], bool]] = None):
     stdscr.clear()
