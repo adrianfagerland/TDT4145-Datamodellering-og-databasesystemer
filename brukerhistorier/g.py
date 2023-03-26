@@ -2,6 +2,7 @@ import datetime
 import sqlite3
 import curses
 from datetime import datetime
+import random
 
 import interface
 from .d import search_togruter_between_stations_for_date
@@ -109,21 +110,30 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
         """, (kundeordrenummer, kjopsdato_str, kjopstidspunkt_str, kundenummer, togrute, reisedato))
 
         for i in range(antallBilletter):
-            # cursor.execute("SELECT MAX(BillettID) FROM Billett")
-            # max_billettID = cursor.fetchone()[0]
-            # billettID = str(int(max_billettID) + 1) if max_billettID else '1'
             unique_billettID = False
-            while not unique_billettID:
+            max_attempts = 10  # Legg til en begrensning på antall forsøk
+            attempts = 0
+
+            while not unique_billettID and attempts < max_attempts:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                billettID = str(int(max_billettID) +
-                                1) if max_billettID else '1'
+                
+                if attempts < max_attempts - 1:
+                    billettID = str(int(max_billettID) + 1) if max_billettID else '1'
+                else:
+                    # Bruk et tilfeldig tall mellom 1 og 99999 som BillettID i siste forsøk
+                    billettID = str(random.randint(1, 99999))
 
                 cursor.execute(
                     "SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
                 count = cursor.fetchone()[0]
                 if count == 0:
                     unique_billettID = True
+                attempts += 1  # Øk antall forsøk
+
+            if attempts == max_attempts and not unique_billettID:
+                #print("Kunne ikke finne et unikt BillettID etter", max_attempts, "forsøk. Avbryter.")
+                break
 
             cursor.execute("""
                 INSERT INTO Billett (BillettID, Påstigning, Avstigning, Ordrenummer, Vogn, Togoppsett)
@@ -229,17 +239,29 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
 
         for i in range(antallBilletter):
             unique_billettID = False
-            while not unique_billettID:
+            max_attempts = 10  # Legg til en begrensning på antall forsøk
+            attempts = 0
+
+            while not unique_billettID and attempts < max_attempts:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                billettID = str(int(max_billettID) +
-                                1) if max_billettID else '1'
+                
+                if attempts < max_attempts - 1:
+                    billettID = str(int(max_billettID) + 1) if max_billettID else '1'
+                else:
+                    # Bruk et tilfeldig tall mellom 1 og 99999 som BillettID i siste forsøk
+                    billettID = str(random.randint(1, 99999))
 
                 cursor.execute(
                     "SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
                 count = cursor.fetchone()[0]
                 if count == 0:
                     unique_billettID = True
+                attempts += 1  # Øk antall forsøk
+
+            if attempts == max_attempts and not unique_billettID:
+                #print("Kunne ikke finne et unikt BillettID etter", max_attempts, "forsøk. Avbryter.")
+                break
 
             cursor.execute("""
                 INSERT INTO Billett (BillettID, Påstigning, Avstigning, Ordrenummer, Vogn, Togoppsett)

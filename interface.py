@@ -394,7 +394,7 @@ def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, typ
     prompt = "Tilgjengelige vogner er følgende:"
 
     for vogn in vogner:
-        prompt += (f"Vognnummer: {vogn[0]}, Vogntype: {vogn[1]}")
+        prompt += (f"\nVognnummer: {vogn[0]}, Vogntype: {vogn[1]}")
     prompt += "\nSkriv hvilket vognnummer du vil reise med: "
 
     while True:
