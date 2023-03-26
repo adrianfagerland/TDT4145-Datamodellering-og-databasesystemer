@@ -32,44 +32,44 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
     if billettype == "sete":
         cursor.execute("""
         WITH Setevogner AS (
-        SELECT Vognnummer, AvType
-        FROM Vogn
-        WHERE Togoppsett = (
-            SELECT Togoppsett
-            FROM Togrute
-            WHERE TogruteID = ? AND Vognnummer = ?
-        )
-        AND AvType IN (
-            SELECT Vogntypenavn
-            FROM Vogntype
-            WHERE Type = 'Sitte'
-        )
-        ),
-        OpptatteSeter AS (
-            SELECT Setenummer, Vogntypenavn, Vognnummer
-            FROM Setebillett
-            JOIN Billett ON Setebillett.BillettID = Billett.BillettID
-            WHERE Ordrenummer IN (
-                SELECT Kundeordrenummer
-                FROM Kundeordre
-                WHERE Rute = ? AND Reisedato = ? AND Vognnummer = ?
-            )
-        ),
-        LedigeSeter AS (
-            SELECT Setenummer, Sittetypenavn, Vognnummer
-            FROM Sete
-            JOIN Setevogner ON Sete.Sittetypenavn = Setevogner.AvType
-            WHERE (Setenummer, Vognnummer) NOT IN (
-                SELECT Setenummer, Vognnummer
-                FROM OpptatteSeter
-            )
-        )
-        SELECT * FROM LedigeSeter;
+SELECT Vognnummer, AvType
+FROM Vogn
+WHERE Togoppsett = (
+    SELECT Togoppsett
+    FROM Togrute
+    WHERE TogruteID = ? AND Vognnummer = ?
+)
+AND AvType IN (
+    SELECT Vogntypenavn
+    FROM Vogntype
+    WHERE Type = 'Sitte'
+)
+),
+OpptatteSeter AS (
+    SELECT Setenummer, Vogntypenavn, Vognnummer
+    FROM Setebillett
+    JOIN Billett ON Setebillett.BillettID = Billett.BillettID
+    JOIN Kundeordre ON Billett.Ordrenummer = Kundeordre.Kundeordrenummer
+    JOIN Togrutetabell as Av ON Kundeordre.Rute = Av.TogruteID AND Billett.Avstigning = Av.Stasjon
+    JOIN Togrutetabell as Pa ON Kundeordre.Rute = Pa.TogruteID AND Billett.Påstigning = Pa.Stasjon
+    JOIN Togrutetabell as PaStasjon ON Kundeordre.Rute = PaStasjon.TogruteID AND PaStasjon.Stasjon = ?
+    JOIN Togrutetabell as AvStasjon ON Kundeordre.Rute = AvStasjon.TogruteID AND AvStasjon.Stasjon = ?
+    WHERE Kundeordre.Reisedato = ? AND Kundeordre.Rute = ?
+    AND (Av.Stasjonnummer BETWEEN PaStasjon.Stasjonnummer AND AvStasjon.Stasjonnummer
+        OR Pa.Stasjonnummer BETWEEN PaStasjon.Stasjonnummer AND AvStasjon.Stasjonnummer)
+),
+LedigeSeter AS (
+    SELECT Setenummer, Sittetypenavn, Vognnummer
+    FROM Sete
+    JOIN Setevogner ON Sete.Sittetypenavn = Setevogner.AvType
+    WHERE (Setenummer, Vognnummer) NOT IN (
+        SELECT Setenummer, Vognnummer
+        FROM OpptatteSeter
+    )
+)
+SELECT * FROM LedigeSeter;
         """,
-        (togrute, vognnummer, togrute, reisedato, vognnummer))
-
-
-
+                       (togrute, vognnummer, startstasjon, sluttstasjon, reisedato, togrute))
 
         antallTilgjengeligeBilletter = 0
         results = cursor.fetchall()
@@ -117,9 +117,10 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             while not unique_billettID and attempts < max_attempts:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                
+
                 if attempts < max_attempts - 1:
-                    billettID = str(int(max_billettID) + 1) if max_billettID else '1'
+                    billettID = str(int(max_billettID) +
+                                    1) if max_billettID else '1'
                 else:
                     # Bruk et tilfeldig tall mellom 1 og 99999 som BillettID i siste forsøk
                     billettID = str(random.randint(1, 99999))
@@ -245,9 +246,10 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             while not unique_billettID and attempts < max_attempts:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                
+
                 if attempts < max_attempts - 1:
-                    billettID = str(int(max_billettID) + 1) if max_billettID else '1'
+                    billettID = str(int(max_billettID) +
+                                    1) if max_billettID else '1'
                 else:
                     # Bruk et tilfeldig tall mellom 1 og 99999 som BillettID i siste forsøk
                     billettID = str(random.randint(1, 99999))

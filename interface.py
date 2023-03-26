@@ -401,7 +401,7 @@ def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, typ
             vognnummer = stdscr.getstr().decode('utf-8').lower()
             curses.noecho()
 
-            if int(vognnummer) in vogner[0]:
+            if int(vognnummer) in [vogn[0] for vogn in vogner]:
                 return vognnummer
             else:
                 stdscr.addstr(1, 0, "Ugyldig vognnummer. Prøv igjen.",
