@@ -129,28 +129,22 @@ def get_menu_choice(stdscr: curses.window):
             print_menu(stdscr, selected, menu_items)
 
 
-def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_stasjon(cursor: sqlite3.Cursor, stdscr: curses.window, prompt: str, exclude: str = ""):
     stdscr.clear()
     curses.curs_set(2)
-    prompt = "Skriv inn stasjon: "
-    cursor.execute("SELECT LOWER(Stasjonnavn) FROM Stasjon;")
-    stations = [row[0] for row in cursor.fetchall()]
+    cursor.execute("""
+        SELECT Stasjonnavn
+        FROM Stasjon""")
+    stations = [row[0] for row in cursor.fetchall() if row[0] not in exclude]
+    return print_login_type_menu(stdscr, prompt, stations)
 
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        stasjon = stdscr.getstr().decode('utf-8').lower()
-        curses.noecho()
 
-        if stasjon in stations:
-            return stasjon
-        else:
-            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.",
-                          curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+def input_avreisestasjon(cursor: sqlite3.Cursor, stdscr: curses.window):
+    return input_stasjon(cursor, stdscr, "Velg avreisestasjon:")
+
+
+def input_ankomststasjon(cursor: sqlite3.Cursor, stdscr: curses.window, startstasjon):
+    return input_stasjon(cursor, stdscr, "Velg ankomststasjon:", startstasjon)
 
 
 def input_ukedag(stdscr: curses.window):
@@ -295,38 +289,37 @@ def input_klokkeslett(stdscr: curses.window):
             stdscr.clear()
 
 
-def print_login_type_menu(stdscr: curses.window, prompt, login_types: list, selected_login_type: int):
-    stdscr.clear()
-    stdscr.addstr(0, 0, prompt, curses.color_pair(1))
-    for i, display_text in enumerate(login_types):
-        if i == selected_login_type:
-            stdscr.addstr(i*2+2, 0, f"{display_text}",
-                          curses.color_pair(2) | curses.A_REVERSE)
-        else:
-            stdscr.addstr(
-                i*2+2, 0, f"{display_text}", curses.color_pair(3))
-    stdscr.refresh()
-
-
-def login(conn: sqlite3.Connection, stdscr: curses.window):
+def print_login_type_menu(stdscr: curses.window, prompt, options: list):
     curses.curs_set(0)
     curses.noecho()
-    cursor = conn.cursor()
-
-    login_types = ["Mobilnummer", "Kundenummer"]
     selected_login_type = 0
-    prompt = "Hvordan vil du logge inn?"
-    print_login_type_menu(stdscr, prompt, login_types, selected_login_type)
     while True:
+        stdscr.clear()
+        stdscr.addstr(0, 0, prompt, curses.color_pair(1))
+        for i, display_text in enumerate(options):
+            if i == selected_login_type:
+                stdscr.addstr(i+2, 0, f"{display_text}",
+                              curses.color_pair(2) | curses.A_REVERSE)
+            else:
+                stdscr.addstr(
+                    i+2, 0, f"{display_text}", curses.color_pair(3))
+        stdscr.refresh()
+
         c = stdscr.getch()
         if c == curses.KEY_UP and selected_login_type > 0:
             selected_login_type -= 1
-        elif c == curses.KEY_DOWN and selected_login_type < len(login_types) - 1:
+        elif c == curses.KEY_DOWN and selected_login_type < len(options) - 1:
             selected_login_type += 1
         elif c == curses.KEY_ENTER or c == 10 or c == 13:
-            break
-        print_login_type_menu(stdscr, prompt, login_types, selected_login_type)
-    login_type = login_types[selected_login_type]
+            return options[selected_login_type]
+
+
+def login(conn: sqlite3.Connection, stdscr: curses.window):
+    cursor = conn.cursor()
+
+    login_types = ["Mobilnummer", "Kundenummer"]
+    prompt = "Hvordan vil du logge inn?"
+    login_type = print_login_type_menu(stdscr, prompt, login_types)
 
     stdscr.clear()
     curses.curs_set(2)
@@ -424,87 +417,6 @@ def get_kjopstidspunkt():
     kjopstidspunkt = now.strftime("%H:%M")
 
     return kjopstidspunkt
-
-
-def input_startstasjon(cursor: sqlite3.Cursor, stdscr: curses.window, togrute):
-    stdscr.clear()
-    curses.curs_set(2)
-    #cursor.execute("SELECT LOWER(Stasjonnavn) FROM Stasjon;")
-    cursor.execute("""
-        SELECT (Stasjonnavn)
-        FROM Stasjon
-        WHERE Stasjonnavn IN (
-            SELECT Stasjon FROM Togrutetabell WHERE TogruteID = ?);""",
-                   (togrute,)
-                   )
-    # togrutetabell
-    # Stasjonnummer INT NOT NULL,
-    # Stasjon VARCHAR(50) NOT NULL,
-    stations = [row[0] for row in cursor.fetchall()]
-    prompt = "Mulige avreisestasjoner: "
-    for station in stations:
-        prompt += station + ', '
-    prompt += "\nSkriv hvilken stasjon du vil reise fra: "
-
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        stasjon = stdscr.getstr().decode('utf-8')
-        curses.noecho()
-
-        if stasjon in stations:
-            return stasjon
-        else:
-            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.",
-                          curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
-
-
-def input_sluttstasjon(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, startstasjon):
-    stdscr.clear()
-    curses.curs_set(2)
-    #cursor.execute("SELECT LOWER(Stasjonnavn) FROM Stasjon;")
-    cursor.execute("""
-        SELECT (Stasjonnavn)
-        FROM Stasjon
-        WHERE Stasjonnavn IN (
-            SELECT Stasjon
-            FROM Togrutetabell
-            WHERE TogruteID = ? AND Stasjonnummer > (
-                SELECT Stasjonnummer
-                FROM Togrutetabell
-                WHERE TogruteID = ? AND Stasjon = ?)
-        );""",
-                   (togrute, togrute, startstasjon)
-                   )
-    # togrutetabell
-    # Stasjonnummer INT NOT NULL,
-    # Stasjon VARCHAR(50) NOT NULL,
-    stations = [row[0] for row in cursor.fetchall()]
-    prompt = "Valgt startstasjon: " + startstasjon
-    prompt += "\nMulige sluttstasjoner: "
-    for station in stations:
-        prompt += station + ', '
-    prompt += "\nSkriv hvilken stasjon du vil reise til: "
-
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        stasjon = stdscr.getstr().decode('utf-8')
-        curses.noecho()
-
-        if stasjon in stations:
-            return stasjon
-        else:
-            stdscr.addstr(1, 0, "Ugyldig stasjon. Prøv igjen.",
-                          curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
 
 
 def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window, antallTilgjengeligeBilletter, billettype):

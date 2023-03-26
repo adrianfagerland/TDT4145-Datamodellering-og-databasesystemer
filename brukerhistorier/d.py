@@ -13,9 +13,10 @@ import interface
 
 def get_togruter_between_stations_for_date(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
-    AvreiseStasjon = interface.input_stasjon(cursor, stdscr)
+    AvreiseStasjon = interface.input_avreisestasjon(cursor, stdscr)
     # Hva med hvis avreise stasjon==ankomst stasjon?
-    AnkomstStasjon = interface.input_stasjon(cursor, stdscr)
+    AnkomstStasjon = interface.input_ankomststasjon(
+        cursor, stdscr, AvreiseStasjon)
     Dato = interface.input_dato(stdscr)
     Tid = interface.input_klokkeslett(stdscr)
     DatoPlusEnDag = (datetime.datetime.strptime(
