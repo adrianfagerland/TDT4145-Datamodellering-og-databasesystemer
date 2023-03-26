@@ -1,20 +1,20 @@
 import datetime
 import sqlite3
 import curses
+from datetime import datetime
 
 import interface
-from datetime import datetime
+from .d import search_togruter_between_stations_for_date
 
 # g) Finn ledige billetter for en oppgitt strekning på en ønsket togrute og kjøp billetter
 
 
 def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
-    togrute = interface.input_togrute(cursor, stdscr)
-    reisedato = interface.input_reisedato(cursor, stdscr)
-    startstasjon = interface.input_startstasjon(cursor, stdscr, togrute)
-    sluttstasjon = interface.input_sluttstasjon(
-        cursor, stdscr, togrute, startstasjon)
+
+    togrute, startstasjon, reisedato, _, sluttstasjon, _ = search_togruter_between_stations_for_date(
+        conn, stdscr, True)
+
     #billettID = interface.make_billettID(cursor)
     kundeordrenummer = interface.make_kundeordrenummer(cursor)
     #kjopsdato = interface.get_kjopsdato()
