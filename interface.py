@@ -8,6 +8,7 @@ import user_stories
 import train
 
 
+# Antar norske mobilnummer, består av 8 siffer
 
 def init(conn):
     stdscr = init_screen()
@@ -61,7 +62,6 @@ def init_screen():
     return stdscr
 
 
-
 def end_screen(stdscr):
     stdscr.keypad(False)
     curses.echo()
@@ -82,7 +82,6 @@ def print_menu(stdscr: curses.window, selected, menu_items):
         stdscr.addstr(index*2 + 2, 0, f"{index + 1}: {item}", attr)
 
     stdscr.refresh()
-
 
 
 def get_menu_choice(stdscr: curses.window):
@@ -251,30 +250,30 @@ def get_kundenummer(cursor):
     return kundenummer
 
 
-
 def input_dato(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn dato (yyyy-mm-dd): "
     while True:
-            curses.echo()
-            stdscr.addstr(0, 0, prompt)
+        curses.echo()
+        stdscr.addstr(0, 0, prompt)
+        stdscr.refresh()
+        dato = stdscr.getstr().decode('utf-8')
+        curses.noecho()
+        try:
+            # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
+            datetime.datetime.strptime(dato, '%Y-%m-%d')
+            return dato
+        except ValueError:
+            stdscr.addstr(1, 0, "Ugyldig datoen. Prøv igjen.",
+                          curses.color_pair(4))
             stdscr.refresh()
-            dato = stdscr.getstr().decode('utf-8')
-            curses.noecho()
-            try:
-                datetime.datetime.strptime(dato, '%Y-%m-%d') # Sjekker om dato er på riktig format. Datetime garanterer at datoen er en reell dato.
-                return dato
-            except ValueError:
-                stdscr.addstr(1, 0, "Ugyldig datoen. Prøv igjen.", curses.color_pair(4))
-                stdscr.refresh()
-                stdscr.getch()
-                stdscr.clear()
-
+            stdscr.getch()
+            stdscr.clear()
 
 
 # input-funksjon for tider på formatet hh:mm
-def input_klokkeslett( stdscr: curses.window):
+def input_klokkeslett(stdscr: curses.window):
     stdscr.clear()
     curses.curs_set(2)
     prompt = "Skriv inn tid (hh:mm): "
@@ -286,30 +285,61 @@ def input_klokkeslett( stdscr: curses.window):
         stdscr.refresh()
         tid = stdscr.getstr().decode('utf-8', 'ignore')
         curses.noecho()
-        if re.fullmatch(tidformat, tid): # Sjekker om tid er på riktig format.
+        if re.fullmatch(tidformat, tid):  # Sjekker om tid er på riktig format.
             return tid
         else:
-            stdscr.addstr(1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
+            stdscr.addstr(
+                1, 0, "Ugyldig format på tiden. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
 
 
-def find_kundenummer(cursor: sqlite3.Cursor, stdscr: curses.window):
+def print_login_type_menu(stdscr: curses.window, prompt, login_types: list, selected_login_type: int):
+    stdscr.clear()
+    stdscr.addstr(0, 0, prompt, curses.color_pair(1))
+    for i, display_text in enumerate(login_types):
+        if i == selected_login_type:
+            stdscr.addstr(i*2+2, 0, f"{display_text}",
+                          curses.color_pair(2) | curses.A_REVERSE)
+        else:
+            stdscr.addstr(
+                i*2+2, 0, f"{display_text}", curses.color_pair(3))
+    stdscr.refresh()
+
+
+def login(conn: sqlite3.Connection, stdscr: curses.window):
+    curses.curs_set(0)
+    curses.noecho()
+    cursor = conn.cursor()
+
+    login_types = ["Mobilnummer", "Kundenummer"]
+    selected_login_type = 0
+    prompt = "Hvordan vil du logge inn?"
+    print_login_type_menu(stdscr, prompt, login_types, selected_login_type)
+    while True:
+        c = stdscr.getch()
+        if c == curses.KEY_UP and selected_login_type > 0:
+            selected_login_type -= 1
+        elif c == curses.KEY_DOWN and selected_login_type < len(login_types) - 1:
+            selected_login_type += 1
+        elif c == curses.KEY_ENTER or c == 10 or c == 13:
+            break
+        print_login_type_menu(stdscr, prompt, login_types, selected_login_type)
+    login_type = login_types[selected_login_type]
+
     stdscr.clear()
     curses.curs_set(2)
-    prompt = "Skriv inn telefonnummeret du er registrert med: "
-
+    curses.echo()
     while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
+        stdscr.addstr(0, 0, f"Skriv inn ditt {login_type.lower()}: ")
         stdscr.refresh()
-        mobilnummerInput = stdscr.getstr().decode('utf-8').lower()
+        kunde_id = stdscr.getstr().decode('utf-8').lower()
         query = f"""
         SELECT Kundenummer FROM Kunde 
-        WHERE LOWER(Mobilnummer) = ?
+        WHERE {login_type} = ?
         """
-        cursor.execute(query, (mobilnummerInput,))
+        cursor.execute(query, (kunde_id,))
 
         # Skriv ut resultatene
         stdscr.clear()
@@ -321,7 +351,7 @@ def find_kundenummer(cursor: sqlite3.Cursor, stdscr: curses.window):
             return kundenummer
         else:
             stdscr.addstr(
-                1, 0, "Finner ingen kunde for dette telefonnummeret. Prøv igjen.", curses.color_pair(4))
+                1, 0, f"Finner ingen kunde for dette {login_type}et. Prøv igjen.", curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
@@ -559,10 +589,11 @@ def velg_billettype(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.getch()
             stdscr.clear()
 
+
 def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, type):
     stdscr.clear()
     curses.curs_set(2)
-    if type == "sete": 
+    if type == "sete":
         cursor.execute("""
         SELECT V.Vognnummer, V.AvType
         FROM Vogn AS V
@@ -574,8 +605,8 @@ def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, typ
         ) AND VT.Type = 'Sitte'
         ORDER BY V.Vognnummer;
         """,
-        (togrute,))
-    if type == "seng": 
+                       (togrute,))
+    if type == "seng":
         cursor.execute("""
         SELECT V.Vognnummer, V.AvType
         FROM Vogn AS V
@@ -587,7 +618,7 @@ def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, typ
         ) AND VT.Type = 'Sove'
         ORDER BY V.Vognnummer;
         """,
-        (togrute,))
+                       (togrute,))
 
     vogner = cursor.fetchall()
     prompt = "Tilgjengelige vogner er følgende:"
@@ -608,13 +639,13 @@ def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, typ
                 return vognnummer
             else:
                 stdscr.addstr(1, 0, "Ugyldig vognnummer. Prøv igjen.",
-                curses.color_pair(4))
+                              curses.color_pair(4))
                 stdscr.refresh()
                 stdscr.getch()
                 stdscr.clear()
         except Exception as e:
             stdscr.addstr(1, 0, f"En feil oppstod: {e}",
-            curses.color_pair(4))
+                          curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
