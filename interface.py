@@ -228,8 +228,8 @@ def input_epost(conn: sqlite3.Connection, stdscr: curses.window):
 
 
 # Validering av mobilnummer TODO
-def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
-    return input_str(stdscr, "Skriv inn telefonnummer: ", validation=(cursor.connection, "Kunde", "Mobilnummer", "Mobilnummeret er allerede i bruk"))
+def input_mobilnummer(conn: sqlite3.Connection, stdscr: curses.window):
+    return input_str(stdscr, "Skriv inn telefonnummer: ", validation=(conn, "Kunde", "Mobilnummer", "Mobilnummeret er allerede i bruk"))
 
 
 def valider_dato(dato: str):

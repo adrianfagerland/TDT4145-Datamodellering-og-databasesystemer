@@ -31,46 +31,46 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
 
     if billettype == "sete":
         cursor.execute("""
-            WITH Sittevogner AS (
-                SELECT Vognnummer, AvType
-                FROM Vogn
-                WHERE Togoppsett = (
-                    SELECT Togoppsett
-                    FROM Togrute
-                    WHERE TogruteID = ? 
-                )
-                AND AvType IN (
-                    SELECT Vogntypenavn
-                    FROM Vogntype
-                    WHERE Type = 'Sitte'
-                )
-                AND Vognnummer = ?
-            ),
-            OpptatteSeter AS (
-                SELECT Setenummer, Vogntypenavn, Vognnummer
-                FROM Setebillett
-                JOIN Billett ON Setebillett.BillettID = Billett.BillettID
-                WHERE Ordrenummer IN (
-                    SELECT Kundeordrenummer
-                    FROM Kundeordre
-                    WHERE Rute = ? AND Reisedato = ? AND Vognnummer = ?
-                ) AND (
-                    (Billett.Påstigning < ? AND Billett.Avstigning > ?)
-                    OR (Billett.Påstigning >= ? AND Billett.Påstigning < ?)
-                )
-            ),
-            LedigeSeter AS (
-                SELECT Setenummer, Sittetypenavn, Radnummer, Vognnummer
-                FROM Sete
-                JOIN Sittevogner ON Sete.Sittetypenavn = Sittevogner.AvType
-                WHERE (Setenummer, Sittetypenavn) NOT IN (
-                    SELECT Setenummer, Vogntypenavn
-                    FROM OpptatteSeter
-                )
+        WITH Setevogner AS (
+        SELECT Vognnummer, AvType
+        FROM Vogn
+        WHERE Togoppsett = (
+            SELECT Togoppsett
+            FROM Togrute
+            WHERE TogruteID = ? AND Vognnummer = ?
+        )
+        AND AvType IN (
+            SELECT Vogntypenavn
+            FROM Vogntype
+            WHERE Type = 'Sitte'
+        )
+        ),
+        OpptatteSeter AS (
+            SELECT Setenummer, Vogntypenavn, Vognnummer
+            FROM Setebillett
+            JOIN Billett ON Setebillett.BillettID = Billett.BillettID
+            WHERE Ordrenummer IN (
+                SELECT Kundeordrenummer
+                FROM Kundeordre
+                WHERE Rute = ? AND Reisedato = ? AND Vognnummer = ?
             )
-            SELECT * FROM LedigeSeter;
-            """,
-                       (togrute, vognnummer, togrute, reisedato, vognnummer, startstasjon, startstasjon, startstasjon, sluttstasjon))
+        ),
+        LedigeSeter AS (
+            SELECT Setenummer, Sittetypenavn, Vognnummer
+            FROM Sete
+            JOIN Setevogner ON Sete.Sittetypenavn = Setevogner.AvType
+            WHERE (Setenummer, Vognnummer) NOT IN (
+                SELECT Setenummer, Vognnummer
+                FROM OpptatteSeter
+            )
+        )
+        SELECT * FROM LedigeSeter;
+        """,
+        (togrute, vognnummer, togrute, reisedato, vognnummer))
+
+
+
+
         antallTilgjengeligeBilletter = 0
         results = cursor.fetchall()
         for row in results:
@@ -82,8 +82,8 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
         for row in results:
             counter += 1
             setenummer = row[0]
-            radnummer = row[2]
-            vognnummer = row[3]
+            radnummer = row[1]
+            vognnummer = row[2]
             billettPrint += (
                 f"Vognnummer: {vognnummer}, Setenummer: {setenummer}, Radnummer: {radnummer}\n")
             if counter == antallBilletter:
