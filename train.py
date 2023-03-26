@@ -12,7 +12,7 @@ def train_animation(stdscr: curses.window, stop_event: threading.Event, screen_l
             with screen_lock:
                 update_train(stdscr, counter)
                 counter += 1
-            next_update_time = current_time + 0.06
+            next_update_time = current_time + 0.1
 
 
 def update_train(stdscr: curses.window, counter):
