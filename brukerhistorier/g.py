@@ -57,7 +57,7 @@ OpptatteSeter AS (
     WHERE Kundeordre.Reisedato = ? AND Kundeordre.Rute = ?
     AND (Av.Stasjonnummer BETWEEN PaStasjon.Stasjonnummer AND AvStasjon.Stasjonnummer
         OR Pa.Stasjonnummer BETWEEN PaStasjon.Stasjonnummer AND AvStasjon.Stasjonnummer)
-    AND NOT (Av.Stasjonnummer = PaStasjon.Stasjonnummer OR Pa.Stasjonnummer = AvStasjon.Stasjonnummer)
+    AND NOT (Av.Stasjonnummer = PaStasjon.Stasjonnummer OR Pa.Stasjonnummer = AvStasjon.Stasjonnummer AND NOT (Av.Stasjonnummer = AvStasjon.Stasjonnummer AND Pa.Stasjonnummer = PaStasjon.Stasjonnummer))
     AND Billett.Vogn = ?
 ),
 LedigeSeter AS (
