@@ -477,10 +477,15 @@ def input_sluttstasjon(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, s
             stdscr.clear()
 
 
-def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window, antallTilgjengeligeBilletter, billettype):
     stdscr.clear()
     curses.curs_set(2)
-    prompt = "Skriv inn antall billetter du vil kjøpe: "
+    reserverasjon = ""
+    if billettype == "seng":
+        reserverasjon = "senger"
+    if billettype == "sete":
+        reserverasjon = "seter"
+    prompt = f"Det er {antallTilgjengeligeBilletter} ledige {reserverasjon}. Skriv inn antall billetter du vil kjøpe: "
     while True:
         curses.echo()
         stdscr.addstr(0, 0, prompt)
@@ -490,11 +495,11 @@ def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window):
 
         try:
             antall = int(antall_str)
-            if antall > 0:
+            if antall <= antallTilgjengeligeBilletter and antall > 0:
                 return antall
             else:
                 stdscr.addstr(
-                    1, 0, "Du må kjøpe et positivt antall billetter. Prøv igjen.", curses.color_pair(4))
+                    1, 0, "Du må kjøpe et positivt antall billetter, og ikke flere enn det er tilgjengelig. Prøv igjen.", curses.color_pair(4))
                 stdscr.refresh()
                 stdscr.getch()
                 stdscr.clear()
