@@ -19,9 +19,9 @@ def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
     Billett.Påstigning,
     Billett.Avstigning,
     Billett.Vogn,
-    COALESCE(Setebillett.Setenummer, Sengebillett.Sengenummer) AS Sete_eller_Seng,
     COUNT(*) AS Antall_Billetter,
     CASE 
+        WHEN Sengebillett.BillettID IS NOT NULL AND Setebillett.BillettID IS NOT NULL THEN 'Sove og Sitte'
         WHEN Sengebillett.BillettID IS NOT NULL THEN 'Sove'
         WHEN Setebillett.BillettID IS NOT NULL THEN 'Sitte'
         ELSE NULL
@@ -47,19 +47,30 @@ def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
     stdscr.addstr(0, 0, f"Informasjon om {rows[0][0]} sine fremtidige kjøp:", curses.color_pair(
         2) | curses.A_BOLD)
     stdscr.refresh()
-    # if rows:
-    #     togrute_id_width = max(
-    #         max(len(row[0]), len('TogruteID')) for row in rows) + 6
-    #     endestasjon_width = max(
-    #         max(len(row[1]), len('Endestasjon')) for row in rows) + 6
-    #     avgang_ankomst_width = 10
+    if rows:
+        col1_w = len('Ordrenr.') + 1
+        col2_w = max(
+            max(len(row[2]), len('TogruteID')) for row in rows) + 3
+        col3_w = max(
+            max(len(row[3]), len('Operatør')) for row in rows) + 3
+        col4_w = max(
+            max(len(row[4]), len('Reisedato')) for row in rows) + 3
+        col5_w = max(
+            max(len(row[5]), len('Påstigning')) for row in rows) + 3
+        col6_w = max(
+            max(len(row[6]), len('Avstigning')) for row in rows) + 3
+        col7_w = len('Vogn') + 3
+        col8_w = len('Ant. bil.') + 3
+        col9_w = max(
+            max(len(row[9]), len('Billettype')) for row in rows) + 3
 
-    #     header = f"{'TogruteID':<{togrute_id_width}}{'Endestasjon':<{endestasjon_width}}{'Avgang':<{avgang_ankomst_width}}"
-    #     stdscr.addstr(2, 0, header, curses.color_pair(1) | curses.A_BOLD)
-    #     stdscr.addstr(3, 0, "-" * (len(header)))
+        header = f"{'Ordrenr.':<{col1_w}}{'TogruteID':<{col2_w}}{'Operatør':<{col3_w}}{'Reisedato':<{col4_w}}{'Påstigning':<{col5_w}}{'Avstigning':<{col6_w}}{'Vogn':<{col7_w}}{'Ant. bil.':<{col8_w}}{'Billettype':<{col9_w}}"
+
+        stdscr.addstr(2, 0, header, curses.color_pair(1) | curses.A_BOLD)
+        stdscr.addstr(3, 0, "-" * (len(header)))
 
     for idx, row in enumerate(rows):
-        result_row = row
+        result_row = f"{row[1]:<{col1_w}}{row[2]:<{col2_w}}{row[3]:<{col3_w}}{row[4]:<{col4_w}}{row[5]:<{col5_w}}{row[6]:<{col6_w}}{row[7]:<{col7_w}}{row[8]:<{col8_w}}{row[9]:<{col9_w}}"
         stdscr.addstr(idx + 4, 0, f"{result_row}", curses.color_pair(3))
     stdscr.refresh()
     stdscr.getch()
