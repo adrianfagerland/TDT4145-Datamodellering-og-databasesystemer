@@ -11,7 +11,7 @@ def register_kunde(conn: sqlite3.Connection, stdscr: curses.window):
     navn = interface.input_kundenavn(stdscr)
     epost = interface.input_epost(cursor, stdscr)
     mobilnummer = interface.input_mobilnummer(cursor, stdscr)
-    kundenummer = interface.get_kundenummer(cursor)
+    kundenummer = interface.make_kundenummer(cursor)
     stdscr.clear()
     cursor.execute("INSERT INTO Kunde (Kundenummer, Kundenavn, Epostadresse, Mobilnummer) VALUES (?, ?, ?, ?)",
                    (kundenummer, navn, epost, mobilnummer))

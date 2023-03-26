@@ -1,30 +1,32 @@
 import datetime
 import sqlite3
 import curses
+from datetime import datetime
 
 import interface
-from datetime import datetime
+from .d import search_togruter_between_stations_for_date
 
 # g) Finn ledige billetter for en oppgitt strekning på en ønsket togrute og kjøp billetter
 
 
 def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
-    togrute = interface.input_togrute(cursor, stdscr)
-    reisedato = interface.input_reisedato(cursor, stdscr)  
-    startstasjon = interface.input_startstasjon(cursor, stdscr, togrute)
-    sluttstasjon = interface.input_sluttstasjon(cursor, stdscr, togrute, startstasjon)
-    #billettID = interface.make_billettID(cursor)  
-    kundeordrenummer = interface.make_kundeordrenummer(cursor)  
-    #kjopsdato = interface.get_kjopsdato()  
-    billettype = interface.velg_billettype(cursor, stdscr)
-    vognnummer = interface.input_vognnummer(cursor, stdscr, togrute, billettype)
 
-    kjopsdato = datetime.now().date() 
+    togrute, startstasjon, reisedato, _, sluttstasjon, _ = search_togruter_between_stations_for_date(
+        conn, stdscr, True)
+
+    #billettID = interface.make_billettID(cursor)
+    kundeordrenummer = interface.make_kundeordrenummer(cursor)
+    #kjopsdato = interface.get_kjopsdato()
+    billettype = interface.velg_billettype(cursor, stdscr)
+    vognnummer = interface.input_vognnummer(
+        cursor, stdscr, togrute, billettype)
+
+    kjopsdato = datetime.now().date()
     kjopsdato_str = kjopsdato.strftime("%Y-%m-%d")
 
-    kjopstidspunkt = datetime.now().time()  
-    kjopstidspunkt_str = kjopstidspunkt.strftime("%H:%M:%S") 
+    kjopstidspunkt = datetime.now().time()
+    kjopstidspunkt_str = kjopstidspunkt.strftime("%H:%M")
 
     if billettype == "sete":
         cursor.execute("""
@@ -67,27 +69,31 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             )
             SELECT * FROM LedigeSeter;
             """,
-        (togrute, vognnummer, togrute, reisedato, vognnummer, startstasjon, startstasjon, startstasjon, sluttstasjon))
+                       (togrute, vognnummer, togrute, reisedato, vognnummer, startstasjon, startstasjon, startstasjon, sluttstasjon))
         antallTilgjengeligeBilletter = 0
-        results = cursor.fetchall()    
+        results = cursor.fetchall()
         for row in results:
             antallTilgjengeligeBilletter += 1
-        antallBilletter = interface.input_billetter(cursor, stdscr, antallTilgjengeligeBilletter, billettype)  
+        antallBilletter = interface.input_billetter(
+            cursor, stdscr, antallTilgjengeligeBilletter, billettype)
         counter = 0
         billettPrint = ""
         for row in results:
-            counter +=  1
+            counter += 1
             setenummer = row[0]
             radnummer = row[2]
             vognnummer = row[3]
-            billettPrint += (f"Vognnummer: {vognnummer}, Setenummer: {setenummer}, Radnummer: {radnummer}\n")
-            if counter == antallBilletter: 
+            billettPrint += (
+                f"Vognnummer: {vognnummer}, Setenummer: {setenummer}, Radnummer: {radnummer}\n")
+            if counter == antallBilletter:
                 break
-        prompt = "Her er " + str(antallBilletter) + " tilgjengelige billetter:\n"
+        prompt = "Her er " + str(antallBilletter) + \
+            " tilgjengelige billetter:\n"
         stdscr.clear()
-        stdscr.addstr(0, 0, prompt + billettPrint + "\nTrykk enter for å komme videre til innlogging for å bestille disse billettene")
+        stdscr.addstr(0, 0, prompt + billettPrint +
+                      "\nTrykk enter for å komme videre til innlogging for å bestille disse billettene")
         stdscr.getch()  # Wait for user to press a key before returning to the menu
-        kundenummer = interface.find_kundenummer(cursor, stdscr)
+        kundenummer = interface.login(conn, stdscr)
 
         cursor.execute("""
         SELECT Togoppsett
@@ -110,9 +116,11 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             while not unique_billettID:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                billettID = str(int(max_billettID) + 1) if max_billettID else '1'
-                
-                cursor.execute("SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
+                billettID = str(int(max_billettID) +
+                                1) if max_billettID else '1'
+
+                cursor.execute(
+                    "SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
                 count = cursor.fetchone()[0]
                 if count == 0:
                     unique_billettID = True
@@ -123,7 +131,6 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             """, (billettID, startstasjon, sluttstasjon, kundeordrenummer, vognnummer, togoppsett))
 
             endPromt += "\nNy billett registrert"
-
 
             if billettype == "sete":
                 setenummer = results[i][0]
@@ -141,7 +148,7 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
 
         stdscr.addstr(0, 0, endPromt)
 
-        conn.commit()   
+        conn.commit()
         stdscr.getch()  # Wait for user to press a key before returning to the menu
 
     if billettype == "seng":
@@ -181,27 +188,31 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
         )
         SELECT * FROM LedigeSenger;
         """,
-        (togrute, vognnummer, togrute, reisedato, vognnummer))
+                       (togrute, vognnummer, togrute, reisedato, vognnummer))
         antallTilgjengeligeBilletter = 0
-        results = cursor.fetchall()    
+        results = cursor.fetchall()
         for row in results:
             antallTilgjengeligeBilletter += 1
-        antallBilletter = interface.input_billetter(cursor, stdscr, antallTilgjengeligeBilletter, billettype)  
+        antallBilletter = interface.input_billetter(
+            cursor, stdscr, antallTilgjengeligeBilletter, billettype)
         counter = 0
         billettPrint = ""
         for row in results:
-            counter +=  1
+            counter += 1
             sengenummer = row[0]
             kupenummer = row[2]
             vognnummer = row[3]
-            billettPrint += (f"Vognnummer: {vognnummer}, Sengenummer: {sengenummer}, Kupénummer: {kupenummer}\n")
-            if counter == antallBilletter: 
+            billettPrint += (
+                f"Vognnummer: {vognnummer}, Sengenummer: {sengenummer}, Kupénummer: {kupenummer}\n")
+            if counter == antallBilletter:
                 break
-        prompt = "Her er " + str(antallBilletter) + " tilgjengelige billetter:\n"
+        prompt = "Her er " + str(antallBilletter) + \
+            " tilgjengelige billetter:\n"
         stdscr.clear()
-        stdscr.addstr(0, 0, prompt + billettPrint + "\nTrykk enter for å komme videre til innlogging for å bestille disse billettene")
+        stdscr.addstr(0, 0, prompt + billettPrint +
+                      "\nTrykk enter for å komme videre til innlogging for å bestille disse billettene")
         stdscr.getch()  # Wait for user to press a key before returning to the menu
-        kundenummer = interface.find_kundenummer(cursor, stdscr)
+        kundenummer = interface.login(conn, stdscr)
 
         cursor.execute("""
         SELECT Togoppsett
@@ -221,9 +232,11 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             while not unique_billettID:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                billettID = str(int(max_billettID) + 1) if max_billettID else '1'
-                
-                cursor.execute("SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
+                billettID = str(int(max_billettID) +
+                                1) if max_billettID else '1'
+
+                cursor.execute(
+                    "SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
                 count = cursor.fetchone()[0]
                 if count == 0:
                     unique_billettID = True
@@ -253,13 +266,15 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
             while not unique_billettID:
                 cursor.execute("SELECT MAX(BillettID) FROM Billett")
                 max_billettID = cursor.fetchone()[0]
-                billettID = str(int(max_billettID) + 1) if max_billettID else '1'
-                
-                cursor.execute("SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
+                billettID = str(int(max_billettID) +
+                                1) if max_billettID else '1'
+
+                cursor.execute(
+                    "SELECT COUNT(*) FROM Billett WHERE BillettID = ?", (billettID,))
                 count = cursor.fetchone()[0]
                 if count == 0:
                     unique_billettID = True
-            try: 
+            try:
                 cursor.execute("""
                     INSERT INTO Billett (BillettID, Påstigning, Avstigning, Ordrenummer, Vogn, Togoppsett)
                     VALUES (?, ?, ?, ?, ?, ?)
@@ -274,13 +289,10 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
                     VALUES (?, ?, ?)
                 """, (billettID, sengenummer, vognnummer))
             except Exception as e:
-                print(f"Fikk ikke booket hele kupéen for oddetalls billett: {e}")
-
+                print(
+                    f"Fikk ikke booket hele kupéen for oddetalls billett: {e}")
 
         stdscr.addstr(0, 0, endPromt)
 
-        conn.commit()   
+        conn.commit()
         stdscr.getch()  # Wait for user to press a key before returning to the menu
-
-
-        
