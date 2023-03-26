@@ -1,8 +1,53 @@
 import sqlite3
 import curses
 
-# h) Finn all informasjon om kjøp for fremtidige reiser for en gitt kunde.
-#    Tabellen vil se slik ut: KundeID, TogruteID, AvreiseDato, AvreiseTid, AnkomstDato, [ulike typer passasjerer?]
+import time
+
+# h) Finn all informasjon om kjøp for fremtidige reiser for en gitt kunde
+
 
 def get_kunde_reise_info(conn: sqlite3.Connection, stdscr: curses.window):
-    pass
+    kundenummer = 1
+    query = f"""
+SELECT 
+    Kunde.Kundenavn,
+    Kunde.Epostadresse,
+    Kunde.Mobilnummer,
+    Kundeordre.Kundeordrenummer,
+    Togrute.TogruteID,
+    Togrute.Operatør,
+    Togruteforekomst.Togruteforekomstdato AS Reisedato,
+    Kundeordre.Kjøpsdato,
+    Kundeordre.Kjøpstidspunkt,
+    Billett.BillettID,
+    Billett.Påstigning,
+    Billett.Avstigning,
+    Billett.Vogn,
+    COALESCE(Setebillett.Setenummer, Sengebillett.Sengenummer) AS Sete_eller_Seng,
+    CASE 
+        WHEN Setebillett.BillettID IS NOT NULL THEN 'Sitte'
+        WHEN Sengebillett.BillettID IS NOT NULL THEN 'Sove'
+        ELSE NULL
+    END AS Sete_eller_Seng_Type
+FROM Kunde
+JOIN Kundeordre ON Kunde.Kundenummer = Kundeordre.Kunde
+JOIN Togruteforekomst ON (Kundeordre.Rute, Kundeordre.Reisedato) = (Togruteforekomst.Rute, Togruteforekomst.Togruteforekomstdato)
+JOIN Togrute ON Kundeordre.Rute = Togrute.TogruteID
+JOIN Billett ON Kundeordre.Kundeordrenummer = Billett.Ordrenummer
+LEFT JOIN Setebillett ON Billett.BillettID = Setebillett.BillettID
+LEFT JOIN Sengebillett ON Billett.BillettID = Sengebillett.BillettID
+LEFT JOIN Vogntype AS SeteVogntype ON Setebillett.Vogntypenavn = SeteVogntype.Vogntypenavn
+LEFT JOIN Vogntype AS SengVogntype ON Sengebillett.Vogntypenavn = SengVogntype.Vogntypenavn
+WHERE Kunde.Kundenummer = 1 AND Togruteforekomst.Togruteforekomstdato >= CURRENT_DATE
+ORDER BY Togruteforekomst.Togruteforekomstdato;
+
+
+"""
+    cursor = conn.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    stdscr.clear()
+    for i, row in enumerate(rows):
+        stdscr.addstr(i, 0, str(row))
+    stdscr.refresh()
+    stdscr.getch()
