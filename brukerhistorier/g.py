@@ -26,7 +26,7 @@ def find_and_buy_billetter(conn: sqlite3.Connection, stdscr: curses.window):
     kjopsdato_str = kjopsdato.strftime("%Y-%m-%d")
 
     kjopstidspunkt = datetime.now().time()
-    kjopstidspunkt_str = kjopstidspunkt.strftime("%H:%M:%S")
+    kjopstidspunkt_str = kjopstidspunkt.strftime("%H:%M")
 
     if billettype == "sete":
         cursor.execute("""

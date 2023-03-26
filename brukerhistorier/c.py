@@ -9,7 +9,7 @@ import interface
 def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.window):
     cursor = conn.cursor()
     stasjon = interface.velg_avreisestasjon(cursor, stdscr)
-    ukedag = interface.input_ukedag(stdscr)
+    ukedag = interface.velg_ukedag(stdscr)
 
     query = f"""
         SELECT t1.TogruteID, t1.Stasjon AS EndStasjon, t2.Ankomst AS CurrentStasjonAnkomst, t2.Avgang AS CurrentStasjonAvgang
@@ -46,10 +46,7 @@ def get_togruter_by_stasjon_and_day(conn: sqlite3.Connection, stdscr: curses.win
         stdscr.addstr(1, 0, "-" * (len(header)))
 
     for idx, row in enumerate(rows):
-        if row[1].lower() == stasjon:
-            result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[2]:<{avgang_ankomst_width}}"
-        else:
-            result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[3]:<{avgang_ankomst_width}}"
+        result_row = f"{row[0]:<{togrute_id_width}}{row[1]:<{endestasjon_width}}{row[3]:<{avgang_ankomst_width}}"
         stdscr.addstr(idx + 3, 0, result_row, curses.color_pair(3))
 
     stdscr.refresh()

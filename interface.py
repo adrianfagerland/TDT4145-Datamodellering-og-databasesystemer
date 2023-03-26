@@ -172,7 +172,7 @@ def velg_ankomststasjon(cursor: sqlite3.Cursor, stdscr: curses.window, startstas
     return velg_stasjon(cursor, stdscr, "Velg ankomststasjon:", startstasjon)
 
 
-def input_ukedag(stdscr: curses.window):
+def velg_ukedag(stdscr: curses.window):
     prompt = "Velg ukedag: "
     ukedager = ["Mandag", "Tirsdag", "Onsdag",
                 "Torsdag", "Fredag", "Lørdag", "Søndag"]
@@ -237,13 +237,6 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
-
-
-def get_kundenummer(cursor):
-    cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
-    result = cursor.fetchone()[0]
-    kundenummer = 1 if result is None else int(result) + 1
-    return kundenummer
 
 
 def input_dato(stdscr: curses.window):
@@ -327,73 +320,23 @@ def login(conn: sqlite3.Connection, stdscr: curses.window):
             stdscr.clear()
 
 
-def input_reisedato(cursor: sqlite3.Cursor, stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    prompt = "Skriv inn ønsket avreisedato (yyyy-mm-dd): "
-    datoformat = re.compile("\d{4}-\d{2}-\d{2}")
-
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        dato = stdscr.getstr().decode('utf-8')
-        curses.noecho()
-        # Sjekker om dato er på riktig format. Garanterer ikke at datoen er en reell dato.
-        if re.fullmatch(datoformat, dato):
-            try:
-                # Funker dette?
-                input_dato = datetime.datetime.strptime(
-                    dato, "%Y-%m-%d").date()
-                if input_dato >= datetime.date.today():
-                    return dato
-                else:
-                    stdscr.addstr(
-                        1, 0, "Datoen kan ikke være i fortid. Prøv igjen.", curses.color_pair(4))
-                    stdscr.refresh()
-                    stdscr.getch()
-                    stdscr.clear()
-            except ValueError:
-                stdscr.addstr(1, 0, "Ugyldig dato. Prøv igjen.",
-                              curses.color_pair(4))
-                stdscr.refresh()
-                stdscr.getch()
-                stdscr.clear()
-        else:
-            stdscr.addstr(
-                1, 0, "Ugyldig format på datoen. Prøv igjen.", curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
+def increment_number(cursor: sqlite3.Cursor, table: str, column: str):
+    cursor.execute(f"SELECT MAX({column}) FROM {table};")
+    result = cursor.fetchone()[0]
+    number = 1 if result is None else int(result) + 1
+    return number
 
 
 def make_billettID(cursor: sqlite3.Cursor):
-    cursor.execute("SELECT MAX(BillettID) FROM Billett;")
-    result = cursor.fetchone()[0]
-    billettID = 1 if result is None else int(result) + 1
-    return billettID
+    return increment_number(cursor, "Billett", "BillettID")
 
 
 def make_kundeordrenummer(cursor: sqlite3.Cursor):
-    cursor.execute("SELECT MAX(Kundeordrenummer) FROM Kundeordre;")
-    result = cursor.fetchone()[0]
-    kundeordrenummer = 1 if result is None else int(result) + 1
-    return kundeordrenummer
+    return increment_number(cursor, "Kundeordre", "Kundeordrenummer")
 
 
-def get_kjopsdato():
-    now = datetime.datetime.now()  # Få dagens dato
-    kjopsdato = now.strftime("%Y-%m-%d")  # Konverter datoen til ønsket format
-
-    return kjopsdato  # Returner datoen
-
-
-def get_kjopstidspunkt():
-    now = datetime.datetime.now()  # Få dagens dato og tid
-    # Konverter tidspunktet til ønsket format
-    kjopstidspunkt = now.strftime("%H:%M")
-
-    return kjopstidspunkt
+def make_kundenummer(cursor: sqlite3.Cursor):
+    return increment_number(cursor, "Kunde", "Kundenummer")
 
 
 def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window, antallTilgjengeligeBilletter, billettype):
@@ -425,33 +368,6 @@ def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window, antallTilgjen
         except ValueError:
             stdscr.addstr(
                 1, 0, "Du må skrive inn et gyldig antall. Prøv igjen.", curses.color_pair(4))
-            stdscr.refresh()
-            stdscr.getch()
-            stdscr.clear()
-
-
-def input_togrute(cursor: sqlite3.Cursor, stdscr: curses.window):
-    stdscr.clear()
-    curses.curs_set(2)
-    cursor.execute("SELECT (TogruteID) FROM Togrute;")
-    ruter = [row[0] for row in cursor.fetchall()]
-    prompt = "Potensielle togruter: "
-    for rute in ruter:
-        prompt += rute + ", "
-    prompt += "\nVelg togrute: "
-
-    while True:
-        curses.echo()
-        stdscr.addstr(0, 0, prompt)
-        stdscr.refresh()
-        valgtRute = stdscr.getstr().decode('utf-8')
-        curses.noecho()
-
-        if valgtRute in ruter:
-            return valgtRute
-        else:
-            stdscr.addstr(1, 0, "Ugyldig rute. Prøv igjen.",
-                          curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
