@@ -247,7 +247,7 @@ def input_mobilnummer(cursor: sqlite3.Cursor, stdscr: curses.window):
 def get_kundenummer(cursor):
     cursor.execute("SELECT MAX(Kundenummer) FROM Kunde;")
     result = cursor.fetchone()[0]
-    kundenummer = 1 if result is None else result + 1
+    kundenummer = 1 if result is None else int(result) + 1
     return kundenummer
 
 
@@ -370,14 +370,14 @@ def input_reisedato(cursor: sqlite3.Cursor, stdscr: curses.window):
 def make_billettID(cursor: sqlite3.Cursor):
     cursor.execute("SELECT MAX(BillettID) FROM Billett;")
     result = cursor.fetchone()[0]
-    billettID = 1 if result is None else result + 1
+    billettID = 1 if result is None else int(result) + 1
     return billettID
 
 
 def make_kundeordrenummer(cursor: sqlite3.Cursor):
     cursor.execute("SELECT MAX(Kundeordrenummer) FROM Kundeordre;")
     result = cursor.fetchone()[0]
-    kundeordrenummer = 1 if result is None else result + 1
+    kundeordrenummer = 1 if result is None else int(result) + 1
     return kundeordrenummer
 
 
@@ -477,10 +477,15 @@ def input_sluttstasjon(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, s
             stdscr.clear()
 
 
-def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window):
+def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window, antallTilgjengeligeBilletter, billettype):
     stdscr.clear()
     curses.curs_set(2)
-    prompt = "Skriv inn antall billetter du vil kjøpe: "
+    reserverasjon = ""
+    if billettype == "seng":
+        reserverasjon = "senger"
+    if billettype == "sete":
+        reserverasjon = "seter"
+    prompt = f"Det er {antallTilgjengeligeBilletter} ledige {reserverasjon}. Skriv inn antall billetter du vil kjøpe: "
     while True:
         curses.echo()
         stdscr.addstr(0, 0, prompt)
@@ -490,11 +495,11 @@ def input_billetter(cursor: sqlite3.Cursor, stdscr: curses.window):
 
         try:
             antall = int(antall_str)
-            if antall > 0:
+            if antall <= antallTilgjengeligeBilletter and antall > 0:
                 return antall
             else:
                 stdscr.addstr(
-                    1, 0, "Du må kjøpe et positivt antall billetter. Prøv igjen.", curses.color_pair(4))
+                    1, 0, "Du må kjøpe et positivt antall billetter, og ikke flere enn det er tilgjengelig. Prøv igjen.", curses.color_pair(4))
                 stdscr.refresh()
                 stdscr.getch()
                 stdscr.clear()
@@ -550,6 +555,66 @@ def velg_billettype(cursor: sqlite3.Cursor, stdscr: curses.window):
         else:
             stdscr.addstr(1, 0, "Ugyldig bilettype. Prøv igjen.",
                           curses.color_pair(4))
+            stdscr.refresh()
+            stdscr.getch()
+            stdscr.clear()
+
+def input_vognnummer(cursor: sqlite3.Cursor, stdscr: curses.window, togrute, type):
+    stdscr.clear()
+    curses.curs_set(2)
+    if type == "sete": 
+        cursor.execute("""
+        SELECT V.Vognnummer, V.AvType
+        FROM Vogn AS V
+        JOIN Vogntype AS VT ON V.AvType = VT.Vogntypenavn
+        WHERE V.Togoppsett = (
+            SELECT Togoppsett
+            FROM Togrute
+            WHERE TogruteID = ?
+        ) AND VT.Type = 'Sitte'
+        ORDER BY V.Vognnummer;
+        """,
+        (togrute,))
+    if type == "seng": 
+        cursor.execute("""
+        SELECT V.Vognnummer, V.AvType
+        FROM Vogn AS V
+        JOIN Vogntype AS VT ON V.AvType = VT.Vogntypenavn
+        WHERE V.Togoppsett = (
+            SELECT Togoppsett
+            FROM Togrute
+            WHERE TogruteID = ?
+        ) AND VT.Type = 'Sove'
+        ORDER BY V.Vognnummer;
+        """,
+        (togrute,))
+
+    vogner = cursor.fetchall()
+    prompt = "Tilgjengelige vogner er følgende:"
+
+    for vogn in vogner:
+        prompt += (f"Vognnummer: {vogn[0]}, Vogntype: {vogn[1]}")
+    prompt += "\nSkriv hvilket vognnummer du vil reise med: "
+
+    while True:
+        try:
+            curses.echo()
+            stdscr.addstr(0, 0, prompt)
+            stdscr.refresh()
+            vognnummer = stdscr.getstr().decode('utf-8').lower()
+            curses.noecho()
+
+            if int(vognnummer) in vogner[0]:
+                return vognnummer
+            else:
+                stdscr.addstr(1, 0, "Ugyldig vognnummer. Prøv igjen.",
+                curses.color_pair(4))
+                stdscr.refresh()
+                stdscr.getch()
+                stdscr.clear()
+        except Exception as e:
+            stdscr.addstr(1, 0, f"En feil oppstod: {e}",
+            curses.color_pair(4))
             stdscr.refresh()
             stdscr.getch()
             stdscr.clear()
